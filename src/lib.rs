@@ -8,37 +8,41 @@ MATLAB MAT file I/O C library
 Loading a mat file
 ```
 use matio_rs::Loader;
-let mat_file = Loader::new("data.mat").load().unwrap();
+let mat_file = Loader::new("data.mat").load()?;
+# Ok::<(), matio_rs::MatioError>(())
 ```
 Reading a scalar Matlab variable: a = π
 ```
 # use matio_rs::Loader;
-# let mat_file = Loader::new("data.mat").load().unwrap();
+# let mat_file = Loader::new("data.mat").load()?;
 if let Ok(mat) = mat_file.read("a") {
     println!("{mat}");
     let a: Option<f64> = mat.into();
     println!("{a:?}");
 }
+# Ok::<(), matio_rs::MatioError>(())
 ```
 Reading a Matlab vector: b = [3.0, 1.0, 4.0, 1.0, 6.0]
 ```
 # use matio_rs::Loader;
-# let mat_file = Loader::new("data.mat").load().unwrap();
+# let mat_file = Loader::new("data.mat").load()?;
 if let Ok(mat) = mat_file.read("b") {
     println!("{mat}");
     let b: Option<Vec<f64>> = mat.into();
     println!("{b:?}");
 }
+# Ok::<(), matio_rs::MatioError>(())
 ```
 Reading a Matlab array: c = [4, 2; 3, 7]
 ```
 # use matio_rs::Loader;
-# let mat_file = Loader::new("data.mat").load().unwrap();
+# let mat_file = Loader::new("data.mat").load()?;
 if let Ok(mat) = mat_file.read("c") {
     println!("{mat}");
     let c: Option<Vec<f64>> = mat.into();
     println!("{c:?}");
 }
+# Ok::<(), matio_rs::MatioError>(())
 ```
 */
 
