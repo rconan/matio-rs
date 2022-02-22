@@ -1,3 +1,47 @@
+/*!
+# Rust bindings and wrappers for [MATIO](https://github.com/tbeu/matio)
+
+This crate provides bindings and wrappers for [MATIO](https://github.com/tbeu/matio):
+MATLAB MAT file I/O C library
+
+## Examples
+Loading a mat file
+```
+use matio_rs::Loader;
+let mat_file = Loader::new("data.mat").load().unwrap();
+```
+Reading a scalar Matlab variable: a = π
+```
+# use matio_rs::Loader;
+# let mat_file = Loader::new("data.mat").load().unwrap();
+if let Ok(mat) = mat_file.read("a") {
+    println!("{mat}");
+    let a: Option<f64> = mat.into();
+    println!("{a:?}");
+}
+```
+Reading a Matlab vector: b = [3.0, 1.0, 4.0, 1.0, 6.0]
+```
+# use matio_rs::Loader;
+# let mat_file = Loader::new("data.mat").load().unwrap();
+if let Ok(mat) = mat_file.read("b") {
+    println!("{mat}");
+    let b: Option<Vec<f64>> = mat.into();
+    println!("{b:?}");
+}
+```
+Reading a Matlab array: c = [4, 2; 3, 7]
+```
+# use matio_rs::Loader;
+# let mat_file = Loader::new("data.mat").load().unwrap();
+if let Ok(mat) = mat_file.read("c") {
+    println!("{mat}");
+    let c: Option<Vec<f64>> = mat.into();
+    println!("{c:?}");
+}
+```
+*/
+
 use ffi;
 use std::{
     fmt::Display,
@@ -20,34 +64,40 @@ pub enum MatioError {
 }
 pub type Result<T> = std::result::Result<T, MatioError>;
 
+/// Mat file acces modes
 pub enum AccessMode {
     ReadOnly,
     ReadWrite,
 }
 
+/// Mat file loader
 pub struct Loader {
     mat_name: PathBuf,
     access_mode: AccessMode,
 }
 impl Loader {
+    /// Creates a new mat file loader object from the `path`
     pub fn new<P: AsRef<Path>>(path: P) -> Self {
         Self {
             mat_name: path.as_ref().to_path_buf(),
             access_mode: AccessMode::ReadOnly,
         }
     }
+    /// Sets the access mode to read-only (default)
     pub fn read_only(self) -> Self {
         Self {
             access_mode: AccessMode::ReadOnly,
             ..self
         }
     }
+    /// Sets the access mode to read-write
     pub fn read_write(self) -> Self {
         Self {
             access_mode: AccessMode::ReadWrite,
             ..self
         }
     }
+    /// Loads a mat file
     pub fn load(self) -> Result<MatFile> {
         let attrs = fs::metadata(&self.mat_name)?;
         if attrs.is_file() {
@@ -69,6 +119,7 @@ impl Loader {
     }
 }
 
+/// Mat file
 pub struct MatFile {
     mat_t: *mut ffi::mat_t,
 }
@@ -80,6 +131,7 @@ impl Drop for MatFile {
     }
 }
 impl MatFile {
+    /// Reads a variable `name` from the mat file
     pub fn read<S: Into<String>>(&self, name: S) -> Result<MatVar> {
         let c_name = std::ffi::CString::new(name.into())?;
         let matvar_t = unsafe { ffi::Mat_VarRead(self.mat_t, c_name.as_ptr()) };
@@ -91,6 +143,7 @@ impl MatFile {
     }
 }
 
+/// Matlab variable
 pub struct MatVar {
     matvar_t: *mut ffi::matvar_t,
 }
