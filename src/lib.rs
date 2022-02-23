@@ -48,9 +48,9 @@ Saving to a mat file
 ```
 use matio_rs::{MatFile, MatVar, Saving};
 let mat_file = MatFile::save("data.rs.mat")?;
-mat_file.write(MatVar::<f64>::new("a", 2f64.sqrt())?);
 let b = (0..5).map(|x| (x as f64).cosh()).collect::<Vec<f64>>();
-mat_file.write(MatVar::<Vec<f64>>::new("b", b)?);
+mat_file.write(MatVar::<f64>::new("a", 2f64.sqrt())?)
+        .write(MatVar::<Vec<f64>>::new("b", b)?);
 # Ok::<(), matio_rs::MatioError>(())
 ```
 */
@@ -194,13 +194,13 @@ pub trait Saving {
     where
         Self: Sized;
     /// Writes a Matlab variable to the mat file
-    fn write<T>(&self, mat_var: MatVar<T>);
+    fn write<T>(&self, mat_var: MatVar<T>) -> &Self;
 }
 impl Saving for MatFile {
     fn save<P: AsRef<Path>>(path: P) -> Result<Self> {
         Builder::new(path).save()
     }
-    fn write<T>(&self, mat_var: MatVar<T>) {
+    fn write<T>(&self, mat_var: MatVar<T>) -> &Self {
         unsafe {
             ffi::Mat_VarWrite(
                 self.mat_t,
@@ -208,6 +208,7 @@ impl Saving for MatFile {
                 ffi::matio_compression_MAT_COMPRESSION_NONE,
             );
         }
+        self
     }
 }
 
