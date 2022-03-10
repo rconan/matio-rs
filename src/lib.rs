@@ -7,13 +7,13 @@ MATLAB MAT file I/O C library
 ## Examples
 Loading a mat file
 ```
-use matio_rs::{MatFile, Loading};
+use matio_rs::{MatFile, Load};
 let mat_file = MatFile::load("data.mat")?;
 # Ok::<(), matio_rs::MatioError>(())
 ```
 Reading a scalar Matlab variable: a = π
 ```
-# use matio_rs::{MatFile, Loading};
+# use matio_rs::{MatFile, Load};
 # let mat_file = MatFile::load("data.mat")?;
 if let Ok(mat) = mat_file.read("a") {
     println!("{mat}");
@@ -24,7 +24,7 @@ if let Ok(mat) = mat_file.read("a") {
 ```
 Reading a Matlab vector: b = [3.0, 1.0, 4.0, 1.0, 6.0]
 ```
-# use matio_rs::{MatFile, Loading};
+# use matio_rs::{MatFile, Load};
 # let mat_file = MatFile::load("data.mat")?;
 if let Ok(mat) = mat_file.read("b") {
     println!("{mat}");
@@ -35,7 +35,7 @@ if let Ok(mat) = mat_file.read("b") {
 ```
 Reading a Matlab array: c = [4, 2; 3, 7]
 ```
-# use matio_rs::{MatFile, Loading};
+# use matio_rs::{MatFile, Load};
 # let mat_file = MatFile::load("data.mat")?;
 if let Ok(mat) = mat_file.read("c") {
     println!("{mat}");
@@ -46,7 +46,7 @@ if let Ok(mat) = mat_file.read("c") {
 ```
 Saving to a mat file
 ```
-use matio_rs::{MatFile, MatVar, Saving};
+use matio_rs::{MatFile, MatVar, Save};
 let mat_file = MatFile::save("data.rs.mat")?;
 let b = (0..5).map(|x| (x as f64).cosh()).collect::<Vec<f64>>();
 mat_file.write(MatVar::<f64>::new("a", 2f64.sqrt())?)
@@ -161,7 +161,7 @@ impl Drop for MatFile {
     }
 }
 /// Mat file loading interface
-pub trait Loading {
+pub trait Load {
     /// Loads a mat file from `path`
     fn load<P: AsRef<Path>>(path: P) -> Result<Self>
     where
@@ -169,7 +169,7 @@ pub trait Loading {
     /// Reads a variable `name` from the mat file
     fn read<T: 'static, S: Into<String>>(&self, name: S) -> Result<MatVar<T>>;
 }
-impl Loading for MatFile {
+impl Load for MatFile {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
         Builder::new(path).load()
     }
@@ -188,7 +188,7 @@ impl Loading for MatFile {
     }
 }
 /// Mat file saving interface
-pub trait Saving {
+pub trait Save {
     /// saves a mat file to `path`
     fn save<P: AsRef<Path>>(path: P) -> Result<Self>
     where
@@ -196,7 +196,7 @@ pub trait Saving {
     /// Writes a Matlab variable to the mat file
     fn write<T>(&self, mat_var: MatVar<T>) -> &Self;
 }
-impl Saving for MatFile {
+impl Save for MatFile {
     fn save<P: AsRef<Path>>(path: P) -> Result<Self> {
         Builder::new(path).save()
     }
@@ -284,9 +284,38 @@ impl MatVar<f64> {
 }
 impl MatVar<Vec<f64>> {
     /// Creates a new Matlab variable `name`
-    pub fn new<S: Into<String>>(name: S, mut data: Vec<f64>) -> Result<Self> {
+    pub fn new<S: Into<String>>(name: S, data: &mut [f64]) -> Result<Self> {
         let c_name = std::ffi::CString::new(name.into())?;
         let mut dims = [1, data.len() as u64];
+        let matvar_t = unsafe {
+            ffi::Mat_VarCreate(
+                c_name.as_ptr(),
+                ffi::matio_classes_MAT_C_DOUBLE,
+                ffi::matio_types_MAT_T_DOUBLE,
+                2,
+                dims.as_mut_ptr(),
+                data.as_mut_ptr() as *mut std::ffi::c_void,
+                0,
+            )
+        };
+        if matvar_t.is_null() {
+            Err(MatioError::MatVarCreate(
+                c_name.to_str().unwrap().to_string(),
+            ))
+        } else {
+            Ok(MatVar {
+                matvar_t,
+                data_type: PhantomData,
+            })
+        }
+    }
+    pub fn array<S: Into<String>>(
+        name: S,
+        data: &mut [f64],
+        shape: (usize, usize),
+    ) -> Result<Self> {
+        let c_name = std::ffi::CString::new(name.into())?;
+        let mut dims = [shape.0 as u64, shape.1 as u64];
         let matvar_t = unsafe {
             ffi::Mat_VarCreate(
                 c_name.as_ptr(),
