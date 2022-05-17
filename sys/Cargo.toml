@@ -9,6 +9,7 @@ repository = "https://github.com/rconan/matio-rs"
 documentation = "https://docs.rs/matio-rs-sys"
 readme = "README.md"
 categories = ["external-ffi-bindings", "mathematics", "science"]
+exclude = ["matio/"]
 
 [build-dependencies]
 bindgen = "0.59.2"
