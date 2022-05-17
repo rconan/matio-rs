@@ -2,12 +2,16 @@
 name = "matio-rs"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["Rod Conan <rconan@gmto.org>"]
+license = "MIT"
+description = "Rust wrapper to MATLAB MAT file I/O library"
+repository = "https://github.com/rconan/matio-rs"
+documentation = "https://docs.rs/matio-rs"
+readme = "README.md"
+categories = ["api-bindings", "mathematics", "science"]
 
 [dependencies]
-ffi = { path = "sys", package = "matio-sys" }
+ffi = { path = "sys", package = "matio-rs-sys" }
 nalgebra = { version = "0.31.0", optional = true }
-num-traits = "0.2.14"
 paste = "1.0.7"
 thiserror = "1.0.30"

@@ -1,3 +1,1 @@
-# Rust MATIO bindings
-
-Rust bindings and wrappers for [MATIO](https://github.com/tbeu/matio)
+# Rust wrapper to [MATLAB MAT file I/O library](https://github.com/tbeu/matio)
