@@ -7,12 +7,12 @@ MATLAB MAT file I/O C library
 ## Examples
 
 Loading a mat file
-```
+```rust
 use matio_rs::{MatFile, Load};
 let mat_file = MatFile::load("data.mat")?;
 ```
 Reading a scalar Matlab variable: a = π
-```
+```rust
 use matio_rs::{MatFile, Load};
 let mat_file = MatFile::load("data.mat")?;
 if let Ok(mat) = mat_file.read("a") {
@@ -22,7 +22,7 @@ if let Ok(mat) = mat_file.read("a") {
 }
 ```
 Reading a Matlab vector: b = [3.0, 1.0, 4.0, 1.0, 6.0]
-```
+```rust
 use matio_rs::{MatFile, Load};
 let mat_file = MatFile::load("data.mat")?;
 if let Ok(mat) = mat_file.read("b") {
@@ -32,7 +32,7 @@ if let Ok(mat) = mat_file.read("b") {
 }
 ```
 Reading a Matlab array: c = [4, 2; 3, 7]
-```
+```rust
 use matio_rs::{MatFile, Load};
 let mat_file = MatFile::load("data.mat")?;
 if let Ok(mat) = mat_file.read("c") {
@@ -42,7 +42,7 @@ if let Ok(mat) = mat_file.read("c") {
 }
 ```
 Saving to a mat file
-```
+```rust
 use matio_rs::{MatFile, MatVar, Save};
 let mat_file = MatFile::save("data.rs.mat")?;
 let mut b = (0..5).map(|x| (x as f64).cosh()).collect::<Vec<f64>>();
