@@ -1,4 +1,4 @@
-use crate::{MatioError, Result};
+use crate::{MatioError, Result,MatObjects};
 use std::{
     any::{type_name, TypeId},
     fmt::Display,
@@ -51,6 +51,11 @@ impl<T: 'static> MatVar<T> {
     }
 }
 
+impl<T> MatObjects for MatVar<T> {
+    fn as_mut_ptr(&mut self) -> *mut ffi::matvar_t {
+        self.matvar_t
+    }
+}
 impl<T: DataType> MatVar<T> {
     /// Creates a new Matlab variable `name`
     pub fn new<S: Into<String>>(name: S, mut data: T) -> Result<Self> {
@@ -81,7 +86,7 @@ impl<T: DataType> MatVar<T> {
 }
 impl<T: DataType> MatVar<Vec<T>> {
     /// Creates a new Matlab variable `name`
-    pub fn new<S: Into<String>>(name: S, data: &mut [T]) -> Result<Self> {
+    pub fn new<S: Into<String>>(name: S, data: &[T]) -> Result<Self> {
         let c_name = std::ffi::CString::new(name.into())?;
         let mut dims = [1, data.len() as u64];
         let matvar_t = unsafe {
@@ -91,7 +96,7 @@ impl<T: DataType> MatVar<Vec<T>> {
                 <T as DataType>::mat_t(),
                 2,
                 dims.as_mut_ptr(),
-                data.as_mut_ptr() as *mut std::ffi::c_void,
+                data.as_ptr() as *mut std::ffi::c_void,
                 0,
             )
         };

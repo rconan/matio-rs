@@ -64,6 +64,8 @@ mod matfile;
 pub use matfile::{Load, MatFile, Save};
 mod matvar;
 pub use matvar::MatVar;
+mod matstruct;
+pub use matstruct::{MatStruct,Field};
 
 #[derive(Error, Debug)]
 pub enum MatioError {
@@ -81,6 +83,9 @@ pub enum MatioError {
     MatType(String, String),
 }
 pub type Result<T> = std::result::Result<T, MatioError>;
+pub trait MatObjects {
+    fn as_mut_ptr(&mut self) -> *mut ffi::matvar_t;
+}
 
 #[cfg(test)]
 mod tests {
@@ -138,6 +143,18 @@ mod tests {
         mat_file.write(MatVar::<i8>::new("a", 1i8).unwrap());
         mat_file.write(MatVar::<f32>::new("b", 2f32).unwrap());
         mat_file.write(MatVar::<Vec<u16>>::new("c", &mut [3u16; 3]).unwrap());
+    }
+
+    #[test]
+    fn test_save_struct() {
+        let mut mat = MatStruct::new("a", vec!["fa", "fb"])
+            .unwrap()
+            .field("fa", &10f64)
+            .unwrap()
+            .field("fb", &vec![0i32, 1, 2, 3])
+            .unwrap();
+        let mat_file = MatFile::save("struct.mat").unwrap();
+        mat_file.write(mat);
     }
 
     #[cfg(feature = "nalgebra")]
