@@ -53,6 +53,15 @@ mat_file.write(MatVar::<f64>::new("a", 2f64.sqrt())?)
         .write(MatVar::<Vec<f64>>::new("b", &mut b)?);
 # Ok::<(), matio_rs::MatioError>(())
 ```
+Writing a Matlab structure to a mat file
+```
+use matio_rs::{MatFile, MatStruct, Save, Field};
+let mut mat = MatStruct::new("s", vec!["fa", "fb"])?
+            .field("fa", &123f64)?
+            .field("fb", &vec![0i32, 1, 2, 3, 4])?;
+let mat_file = MatFile::save("struct.mat")?;
+mat_file.write(mat);
+# Ok::<(), matio_rs::MatioError>(())
 */
 
 use std::io;
@@ -65,7 +74,7 @@ pub use matfile::{Load, MatFile, Save};
 mod matvar;
 pub use matvar::MatVar;
 mod matstruct;
-pub use matstruct::{MatStruct,Field};
+pub use matstruct::{Field, MatStruct};
 
 #[derive(Error, Debug)]
 pub enum MatioError {
@@ -83,6 +92,8 @@ pub enum MatioError {
     MatType(String, String),
 }
 pub type Result<T> = std::result::Result<T, MatioError>;
+
+/// Interface to Matlab data
 pub trait MatObjects {
     fn as_mut_ptr(&mut self) -> *mut ffi::matvar_t;
 }

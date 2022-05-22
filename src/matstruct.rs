@@ -8,7 +8,7 @@ pub struct MatStruct {
 }
 
 impl MatStruct {
-    /// Creates a new Matlab structure `name`
+    /// Creates a new Matlab structure `name` with the name of the fields
     pub fn new<S: Into<String>>(name: S, fields: Vec<S>) -> Result<Self> {
         let c_name = std::ffi::CString::new(name.into())?;
         let nfields = fields.len() as u32;
@@ -43,8 +43,17 @@ impl MatStruct {
     }
 }
 
+/*impl Drop for MatStruct {
+    fn drop(&mut self) {
+        unsafe {
+            ffi::Mat_VarFree(self.matstruct_t);
+        }
+    }
+}*/
+
+/// Matlab field structure interface
 pub trait Field<S: Into<String>, T> {
-    /// Adds a Matlab variable to the field
+    /// Adds a Matlab variable to the field `name`
     fn field(self, name: S, data: &T) -> Result<Self>
     where
         Self: Sized;
@@ -52,7 +61,7 @@ pub trait Field<S: Into<String>, T> {
 impl<S, T> Field<S, T> for MatStruct
 where
     S: Into<String>,
-    T: 'static + DataType+Copy,
+    T: 'static + DataType + Copy,
 {
     fn field(mut self, name: S, data: &T) -> Result<Self> {
         let c_name = std::ffi::CString::new(name.into())?;
@@ -68,7 +77,7 @@ where
     S: Into<String>,
     T: 'static + DataType,
 {
-    fn field(mut self, name: S, mut data: &Vec<T>) -> Result<Self> {
+    fn field(mut self, name: S, data: &Vec<T>) -> Result<Self> {
         let c_name = std::ffi::CString::new(name.into())?;
         let mut fieldvar = MatVar::<Vec<T>>::new(String::new(), data)?;
         let ptr = fieldvar.as_mut_ptr();
