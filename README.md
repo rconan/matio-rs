@@ -49,3 +49,26 @@ let mut b = (0..5).map(|x| (x as f64).cosh()).collect::<Vec<f64>>();
 mat_file.write(MatVar::<f64>::new("a", 2f64.sqrt())?)
         .write(MatVar::<Vec<f64>>::new("b", &mut b)?);
 ```
+Writing a Matlab structure to a mat file
+```rust
+use matio_rs::{MatFile, MatStruct, Save, Field};
+let mut mat = MatStruct::new("s", vec!["fa", "fb"])?
+            .field("fa", &123f64)?
+            .field("fb", &vec![0i32, 1, 2, 3, 4])?;
+let mat_file = MatFile::save("struct.mat")?;
+mat_file.write(mat);
+```
+Writing a Matlab structure array to a mat file
+```rust
+use matio_rs::{MatFile, MatStruct, Save, FieldIterator};
+let u = vec![1u32,2,3];
+let v: Vec<_> = u.iter()
+                  .map(|&x| (0..x).map(|y| y as f64 *(x as f64)/5.).collect::<Vec<f64>>())
+                  .collect();
+let mat = MatStruct::new("s")
+            .field("fa", u.iter())?
+            .field("fb", v.iter())?
+            .build()?;
+let mat_file = MatFile::save("struct-array.mat")?;
+mat_file.write(mat);
+```

@@ -56,13 +56,29 @@ mat_file.write(MatVar::<f64>::new("a", 2f64.sqrt())?)
 Writing a Matlab structure to a mat file
 ```
 use matio_rs::{MatFile, MatStruct, Save, Field};
-let mut mat = MatStruct::new("s", vec!["fa", "fb"])?
+let mat = MatStruct::new("s")
             .field("fa", &123f64)?
-            .field("fb", &vec![0i32, 1, 2, 3, 4])?;
+            .field("fb", &vec![0i32, 1, 2, 3, 4])?
+            .build()?;
 let mat_file = MatFile::save("struct.mat")?;
 mat_file.write(mat);
 # Ok::<(), matio_rs::MatioError>(())
-*/
+```
+Writing a Matlab structure array to a mat file
+```
+use matio_rs::{MatFile, MatStruct, Save, FieldIterator};
+let u = vec![1u32,2,3];
+let v: Vec<_> = u.iter()
+                  .map(|&x| (0..x).map(|y| y as f64 *(x as f64)/5.).collect::<Vec<f64>>())
+                  .collect();
+let mat = MatStruct::new("s")
+            .field("fa", u.iter())?
+            .field("fb", v.iter())?
+            .build()?;
+let mat_file = MatFile::save("struct-array.mat")?;
+mat_file.write(mat);
+# Ok::<(), matio_rs::MatioError>(())
+```*/
 
 use std::io;
 use thiserror::Error;
@@ -74,7 +90,7 @@ pub use matfile::{Load, MatFile, Save};
 mod matvar;
 pub use matvar::MatVar;
 mod matstruct;
-pub use matstruct::{Field, MatStruct};
+pub use matstruct::{Field, FieldIterator, MatStruct};
 
 #[derive(Error, Debug)]
 pub enum MatioError {
@@ -90,6 +106,8 @@ pub enum MatioError {
     MatVarCreate(String),
     #[error("Rust ({0}) and Matlab ({1}) types do not match")]
     MatType(String, String),
+    #[error("structure fields missing")]
+    NoFields,
 }
 pub type Result<T> = std::result::Result<T, MatioError>;
 
@@ -100,7 +118,7 @@ pub trait MatObjects {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::{Load, MatFile, MatStruct, MatVar, Save};
 
     #[test]
     fn test_load() {
@@ -158,16 +176,33 @@ mod tests {
 
     #[test]
     fn test_save_struct() {
-        let mut mat = MatStruct::new("a", vec!["fa", "fb"])
-            .unwrap()
+        use crate::Field;
+        let mat = MatStruct::new("a")
             .field("fa", &10f64)
             .unwrap()
             .field("fb", &vec![0i32, 1, 2, 3])
+            .unwrap()
+            .build()
             .unwrap();
         let mat_file = MatFile::save("struct.mat").unwrap();
         mat_file.write(mat);
     }
 
+    #[test]
+    fn test_save_struct_array() {
+        use crate::FieldIterator;
+        let u = vec![1, 2, 3];
+        let v = vec![4, 5, 6];
+        let mat = MatStruct::new("a")
+            .field("fa", u.iter())
+            .unwrap()
+            .field("fb", v.iter())
+            .unwrap()
+            .build()
+            .unwrap();
+        let mat_file = MatFile::save("struct.mat").unwrap();
+        mat_file.write(mat);
+    }
     #[cfg(feature = "nalgebra")]
     #[test]
     fn test_vector() {
