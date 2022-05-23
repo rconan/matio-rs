@@ -7,6 +7,7 @@ pub struct MatStruct {
     #[allow(dead_code)]
     fields: Option<HashMap<String, Vec<Box<dyn MatObject>>>>,
 }
+/// Matlab structure builder
 pub struct MatStructBuilder {
     name: String,
     fields: Option<HashMap<String, Vec<Box<dyn MatObject>>>>,
@@ -135,6 +136,7 @@ where
     }
 }
 
+/// Matlab field structure interface for [Iterator]
 pub trait FieldIterator<'a, S: Into<String>, T> {
     /// Adds a Matlab variable to the field `name`
     fn field(self, name: S, data: impl Iterator<Item = &'a T>) -> Result<Self>
@@ -181,17 +183,17 @@ where
     }
 }
 
-pub trait FieldMatObject<S: Into<String>,T: MatObject>{
-    fn field( self, name: S, data: T) -> Result<Self>
+/// Matlab field structure interface for [MatObject]
+pub trait FieldMatObject<T: MatObject>{
+    fn field<S: Into<String>>( self, name: S, data: T) -> Result<Self>
     where
         Self: Sized;
 }
-impl<S, T> FieldMatObject<S, T> for MatStructBuilder
+impl<T> FieldMatObject<T> for MatStructBuilder
 where
-    S: Into<String>,
     T: 'static + MatObject,
 {
-    fn field(mut self, name: S, data: T) -> Result<Self> {
+    fn field<S: Into<String>>(mut self, name: S, data: T) -> Result<Self> {
         self.fields
             .get_or_insert_with(|| HashMap::new())
             .entry(name.into())
@@ -201,6 +203,7 @@ where
     }
 }
 
+/// Matlab field structure interface for [MatObject] [Iterator]
 pub trait FieldMatObjectIterator<S: Into<String>,T: MatObject>{
     fn field( self, name: S, data: impl Iterator<Item=T>) -> Result<Self>
     where

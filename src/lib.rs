@@ -78,6 +78,49 @@ let mat = MatStruct::new("s")
 let mat_file = MatFile::save("struct-array.mat")?;
 mat_file.write(mat);
 # Ok::<(), matio_rs::MatioError>(())
+```
+Writing a nested Matlab structure to a mat file
+```
+use matio_rs::{MatFile, MatStruct, MatStructBuilder, Save};
+let mut builder = {
+    use matio_rs::Field;
+    MatStruct::new("a")
+        .field("fa", &10f64)?
+        .field("fb", &vec![0i32, 1, 2, 3])?
+};
+let nested = {
+    use matio_rs::Field;
+    MatStruct::new("a")
+        .field("fa", &10f64)?
+        .field("fb", &vec![0i32, 1, 2, 3])?
+        .build()?
+};
+builder = <MatStructBuilder as matio_rs::FieldMatObject<MatStruct>>::field(
+    builder, "nested", nested,
+)?;
+let mat_file = MatFile::save("struct_nested.mat").unwrap();
+mat_file.write(builder.build()?);
+# Ok::<(), matio_rs::MatioError>(())
+```
+Loading Matlab array into [nalgebra](https://docs.rs/nalgebra) vectors
+```
+use matio_rs::{MatFile, Load};
+let mat_file = MatFile::load("arrays.mat")?;
+let a: nalgebra::DVector<f64> = mat_file.read("a")?.into();
+println!("{a}");
+let b: nalgebra::DVector<f64> = mat_file.read("b")?.into();
+println!("{b}");
+# Ok::<(), matio_rs::MatioError>(())
+```
+Loading Matlab array into [nalgebra](https://docs.rs/nalgebra) matrices
+```
+use matio_rs::{MatFile, Load};
+let mat_file = MatFile::load("arrays.mat")?;
+let a: Option<nalgebra::DMatrix<f64>> = mat_file.read("a")?.into();
+println!("{a:?}");
+let b: Option<nalgebra::DMatrix<f64>> = mat_file.read("b")?.into();
+println!("{b:?}");
+# Ok::<(), matio_rs::MatioError>(())
 ```*/
 
 use std::io;
@@ -90,7 +133,9 @@ pub use matfile::{Load, MatFile, Save};
 mod matvar;
 pub use matvar::MatVar;
 mod matstruct;
-pub use matstruct::{Field, FieldIterator, MatStruct};
+pub use matstruct::{
+    Field, FieldIterator, FieldMatObject, FieldMatObjectIterator, MatStruct, MatStructBuilder,
+};
 
 #[derive(Error, Debug)]
 pub enum MatioError {
@@ -120,7 +165,7 @@ pub trait MatObject {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Load, MatFile, MatStruct, MatVar, Save};
+    use crate::{matstruct::MatStructBuilder, Load, MatFile, MatStruct, MatVar, Save};
 
     #[test]
     fn test_load() {
@@ -205,6 +250,35 @@ mod tests {
         let mat_file = MatFile::save("struct.mat").unwrap();
         mat_file.write(mat);
     }
+
+    #[test]
+    fn test_save_nested_struct() {
+        let mut builder = {
+            use crate::Field;
+            MatStruct::new("a")
+                .field("fa", &10f64)
+                .unwrap()
+                .field("fb", &vec![0i32, 1, 2, 3])
+                .unwrap()
+        };
+        let nested = {
+            use crate::Field;
+            MatStruct::new("a")
+                .field("fa", &10f64)
+                .unwrap()
+                .field("fb", &vec![0i32, 1, 2, 3])
+                .unwrap()
+                .build()
+                .unwrap()
+        };
+        builder = <MatStructBuilder as crate::FieldMatObject<MatStruct>>::field(
+            builder, "nested", nested,
+        )
+        .unwrap();
+        let mat_file = MatFile::save("struct_nested.mat").unwrap();
+        mat_file.write(builder.build().unwrap());
+    }
+
     #[cfg(feature = "nalgebra")]
     #[test]
     fn test_vector() {
