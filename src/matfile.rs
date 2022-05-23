@@ -1,4 +1,4 @@
-use crate::{Builder, MatVar, MatioError, Result, MatObjects};
+use crate::{Builder, MatVar, MatioError, Result, MatObject};
 use std::{marker::PhantomData, path::Path};
 
 /// Mat file
@@ -46,13 +46,13 @@ pub trait Save {
     where
         Self: Sized;
     /// Writes a Matlab variable to the mat file
-    fn write(&self, mat_var: impl MatObjects) -> &Self;
+    fn write(&self, mat_var: impl MatObject) -> &Self;
 }
 impl Save for MatFile {
     fn save<P: AsRef<Path>>(path: P) -> Result<Self> {
         Builder::new(path).save()
     }
-    fn write(&self, mut var: impl MatObjects) -> &Self {
+    fn write(&self, mut var: impl MatObject) -> &Self {
         unsafe {
             ffi::Mat_VarWrite(
                 self.mat_t,

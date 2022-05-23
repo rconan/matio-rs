@@ -114,7 +114,7 @@ pub enum MatioError {
 pub type Result<T> = std::result::Result<T, MatioError>;
 
 /// Interface to Matlab data
-pub trait MatObjects {
+pub trait MatObject {
     fn as_mut_ptr(&mut self) -> *mut ffi::matvar_t;
 }
 

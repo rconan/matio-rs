@@ -1,15 +1,15 @@
-use crate::{matvar::DataType, MatObjects, MatVar, MatioError, Result};
+use crate::{matvar::DataType, MatObject, MatVar, MatioError, Result};
 use std::{collections::HashMap, ffi::CString};
 
 /// Matlab structure
 pub struct MatStruct {
     matstruct_t: *mut ffi::matvar_t,
     #[allow(dead_code)]
-    fields: Option<HashMap<String, Vec<Box<dyn MatObjects>>>>,
+    fields: Option<HashMap<String, Vec<Box<dyn MatObject>>>>,
 }
 pub struct MatStructBuilder {
     name: String,
-    fields: Option<HashMap<String, Vec<Box<dyn MatObjects>>>>,
+    fields: Option<HashMap<String, Vec<Box<dyn MatObject>>>>,
 }
 impl MatStruct {
     /// Creates a new Matlab structure `name`
@@ -88,6 +88,12 @@ impl MatStructBuilder {
     }
 }*/
 
+impl MatObject for MatStruct {
+    fn as_mut_ptr(&mut self) -> *mut ffi::matvar_t {
+        self.matstruct_t
+    }
+}
+
 /// Matlab field structure interface
 pub trait Field<S: Into<String>, T> {
     /// Adds a Matlab variable to the field `name`
@@ -150,7 +156,7 @@ where
                 Box::new(
                     MatVar::<T>::new(String::new(), *data)
                         .expect(&format!("creating mat var {0} failed", name.clone().into())),
-                ) as Box<dyn MatObjects>
+                ) as Box<dyn MatObject>
             }));
         Ok(self)
     }
@@ -169,13 +175,49 @@ where
                 Box::new(
                     MatVar::<Vec<T>>::new(String::new(), data)
                         .expect(&format!("creating mat var {0} failed", name.clone().into())),
-                ) as Box<dyn MatObjects>
+                ) as Box<dyn MatObject>
             }));
         Ok(self)
     }
 }
-impl MatObjects for MatStruct {
-    fn as_mut_ptr(&mut self) -> *mut ffi::matvar_t {
-        self.matstruct_t
+
+pub trait FieldMatObject<S: Into<String>,T: MatObject>{
+    fn field( self, name: S, data: T) -> Result<Self>
+    where
+        Self: Sized;
+}
+impl<S, T> FieldMatObject<S, T> for MatStructBuilder
+where
+    S: Into<String>,
+    T: 'static + MatObject,
+{
+    fn field(mut self, name: S, data: T) -> Result<Self> {
+        self.fields
+            .get_or_insert_with(|| HashMap::new())
+            .entry(name.into())
+            .or_default()
+            .push(Box::new(data));
+        Ok(self)
     }
 }
+
+pub trait FieldMatObjectIterator<S: Into<String>,T: MatObject>{
+    fn field( self, name: S, data: impl Iterator<Item=T>) -> Result<Self>
+    where
+        Self: Sized;
+}
+impl<S, T> FieldMatObjectIterator<S, T> for MatStructBuilder
+where
+    S: Into<String>,
+    T: 'static + MatObject,
+{
+    fn field(mut self, name: S, data: impl Iterator<Item=T>) -> Result<Self> {
+        self.fields
+            .get_or_insert_with(|| HashMap::new())
+            .entry(name.into())
+            .or_default()
+            .extend(data.map(|data| Box::new(data) as Box<dyn MatObject>));
+        Ok(self)
+    }
+}
+
