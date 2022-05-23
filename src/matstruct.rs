@@ -96,18 +96,17 @@ impl MatObject for MatStruct {
 }
 
 /// Matlab field structure interface
-pub trait Field<S: Into<String>, T> {
+pub trait Field<T> {
     /// Adds a Matlab variable to the field `name`
-    fn field(self, name: S, data: &T) -> Result<Self>
+    fn field<S: Into<String>>(self, name: S, data: &T) -> Result<Self>
     where
         Self: Sized;
 }
-impl<S, T> Field<S, T> for MatStructBuilder
+impl<T> Field<T> for MatStructBuilder
 where
-    S: Into<String>,
     T: 'static + DataType + Copy,
 {
-    fn field(mut self, name: S, data: &T) -> Result<Self> {
+    fn field<S: Into<String>>(mut self, name: S, data: &T) -> Result<Self> {
         let fieldvar = MatVar::<T>::new(String::new(), *data)?;
         self.fields
             .get_or_insert_with(|| HashMap::new())
@@ -117,12 +116,11 @@ where
         Ok(self)
     }
 }
-impl<S, T> Field<S, Vec<T>> for MatStructBuilder
+impl<T> Field<Vec<T>> for MatStructBuilder
 where
-    S: Into<String>,
     T: 'static + DataType,
 {
-    fn field(mut self, name: S, data: &Vec<T>) -> Result<Self> {
+    fn field<S: Into<String>>(mut self, name: S, data: &Vec<T>) -> Result<Self> {
         let fieldvar = MatVar::<Vec<T>>::new(String::new(), data)?;
         self.fields
             .get_or_insert_with(|| HashMap::new())
@@ -137,19 +135,25 @@ where
 }
 
 /// Matlab field structure interface for [Iterator]
-pub trait FieldIterator<'a, S: Into<String>, T> {
+pub trait FieldIterator<'a, T> {
     /// Adds a Matlab variable to the field `name`
-    fn field(self, name: S, data: impl Iterator<Item = &'a T>) -> Result<Self>
+    fn field<S: Into<String> + Clone>(
+        self,
+        name: S,
+        data: impl Iterator<Item = &'a T>,
+    ) -> Result<Self>
     where
         T: 'a,
         Self: Sized;
 }
-impl<'a, S, T> FieldIterator<'a, S, T> for MatStructBuilder
+impl<'a, T> FieldIterator<'a, T> for MatStructBuilder
 where
-    S: Into<String> + Clone,
     T: 'static + DataType + Copy,
 {
-    fn field(mut self, name: S, data: impl Iterator<Item = &'a T>) -> Result<Self> {
+    fn field<S>(mut self, name: S, data: impl Iterator<Item = &'a T>) -> Result<Self>
+    where
+        S: Into<String> + Clone,
+    {
         self.fields
             .get_or_insert_with(|| HashMap::new())
             .entry(name.clone().into())
@@ -163,12 +167,14 @@ where
         Ok(self)
     }
 }
-impl<'a, S, T> FieldIterator<'a, S, Vec<T>> for MatStructBuilder
+impl<'a, T> FieldIterator<'a, Vec<T>> for MatStructBuilder
 where
-    S: Into<String> + Clone,
     T: 'static + DataType,
 {
-    fn field(mut self, name: S, data: impl Iterator<Item = &'a Vec<T>>) -> Result<Self> {
+    fn field<S>(mut self, name: S, data: impl Iterator<Item = &'a Vec<T>>) -> Result<Self>
+    where
+        S: Into<String> + Clone,
+    {
         self.fields
             .get_or_insert_with(|| HashMap::new())
             .entry(name.clone().into())
@@ -184,8 +190,8 @@ where
 }
 
 /// Matlab field structure interface for [MatObject]
-pub trait FieldMatObject<T: MatObject>{
-    fn field<S: Into<String>>( self, name: S, data: T) -> Result<Self>
+pub trait FieldMatObject<T: MatObject> {
+    fn field<S: Into<String>>(self, name: S, data: T) -> Result<Self>
     where
         Self: Sized;
 }
@@ -204,17 +210,16 @@ where
 }
 
 /// Matlab field structure interface for [MatObject] [Iterator]
-pub trait FieldMatObjectIterator<S: Into<String>,T: MatObject>{
-    fn field( self, name: S, data: impl Iterator<Item=T>) -> Result<Self>
+pub trait FieldMatObjectIterator<T: MatObject> {
+    fn field<S: Into<String>>(self, name: S, data: impl Iterator<Item = T>) -> Result<Self>
     where
         Self: Sized;
 }
-impl<S, T> FieldMatObjectIterator<S, T> for MatStructBuilder
+impl<T> FieldMatObjectIterator<T> for MatStructBuilder
 where
-    S: Into<String>,
     T: 'static + MatObject,
 {
-    fn field(mut self, name: S, data: impl Iterator<Item=T>) -> Result<Self> {
+    fn field<S: Into<String>>(mut self, name: S, data: impl Iterator<Item = T>) -> Result<Self> {
         self.fields
             .get_or_insert_with(|| HashMap::new())
             .entry(name.into())
@@ -223,4 +228,3 @@ where
         Ok(self)
     }
 }
-
