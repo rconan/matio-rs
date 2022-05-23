@@ -108,6 +108,8 @@ pub enum MatioError {
     MatType(String, String),
     #[error("structure fields missing")]
     NoFields,
+    #[error("structure fields have different sizes {0:?}")]
+    FieldSize(Vec<usize>),
 }
 pub type Result<T> = std::result::Result<T, MatioError>;
 

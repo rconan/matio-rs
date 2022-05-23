@@ -38,7 +38,7 @@ impl MatStructBuilder {
                 let mut n: Vec<_> = fields.values().map(|v| v.len()).collect();
                 n.dedup();
                 let mut dims = match n.len() {
-                    l if l == 0 || l > 1 => todo!(),
+                    l if l == 0 || l > 1 => return Err(MatioError::FieldSize(n)),
                     _ => [1u64, n[0] as u64],
                 };
                 let matstruct_t = unsafe {
