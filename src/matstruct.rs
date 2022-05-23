@@ -138,32 +138,38 @@ pub trait FieldIterator<'a, S: Into<String>, T> {
 }
 impl<'a, S, T> FieldIterator<'a, S, T> for MatStructBuilder
 where
-    S: Into<String>,
+    S: Into<String> + Clone,
     T: 'static + DataType + Copy,
 {
     fn field(mut self, name: S, data: impl Iterator<Item = &'a T>) -> Result<Self> {
         self.fields
             .get_or_insert_with(|| HashMap::new())
-            .entry(name.into())
+            .entry(name.clone().into())
             .or_default()
             .extend(data.map(|data| {
-                Box::new(MatVar::<T>::new(String::new(), *data).unwrap()) as Box<dyn MatObjects>
+                Box::new(
+                    MatVar::<T>::new(String::new(), *data)
+                        .expect(&format!("creating mat var {0} failed", name.clone().into())),
+                ) as Box<dyn MatObjects>
             }));
         Ok(self)
     }
 }
 impl<'a, S, T> FieldIterator<'a, S, Vec<T>> for MatStructBuilder
 where
-    S: Into<String>,
-    T: 'static + DataType + Copy,
+    S: Into<String> + Clone,
+    T: 'static + DataType,
 {
     fn field(mut self, name: S, data: impl Iterator<Item = &'a Vec<T>>) -> Result<Self> {
         self.fields
             .get_or_insert_with(|| HashMap::new())
-            .entry(name.into())
+            .entry(name.clone().into())
             .or_default()
             .extend(data.map(|data| {
-                Box::new(MatVar::<Vec<T>>::new(String::new(), data).unwrap()) as Box<dyn MatObjects>
+                Box::new(
+                    MatVar::<Vec<T>>::new(String::new(), data)
+                        .expect(&format!("creating mat var {0} failed", name.clone().into())),
+                ) as Box<dyn MatObjects>
             }));
         Ok(self)
     }
