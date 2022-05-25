@@ -7,15 +7,15 @@ MATLAB MAT file I/O C library
 ## Examples
 Loading a mat file
 ```
-use matio_rs::{MatFile, Load};
+use matio_rs::{MatFile, Load, Read, MatVar};
 let mat_file = MatFile::load("data.mat")?;
 # Ok::<(), matio_rs::MatioError>(())
 ```
 Reading a scalar Matlab variable: a = π
 ```
-# use matio_rs::{MatFile, Load};
+# use matio_rs::{MatFile, Load, Read, MatVar};
 # let mat_file = MatFile::load("data.mat")?;
-if let Ok(mat) = mat_file.read("a") {
+if let Result::<MatVar<f64>,_>::Ok(mat) = mat_file.read("a") {
     println!("{mat}");
     let a: f64 = mat.into();
     println!("{a:?}");
@@ -24,9 +24,9 @@ if let Ok(mat) = mat_file.read("a") {
 ```
 Reading a Matlab vector: b = [3.0, 1.0, 4.0, 1.0, 6.0]
 ```
-# use matio_rs::{MatFile, Load};
+# use matio_rs::{MatFile, Load, Read, MatVar};
 # let mat_file = MatFile::load("data.mat")?;
-if let Ok(mat) = mat_file.read("b") {
+if let Result::<MatVar<Vec<f64>>,_>::Ok(mat) = mat_file.read("b") {
     println!("{mat}");
     let b: Vec<f64> = mat.into();
     println!("{b:?}");
@@ -35,9 +35,9 @@ if let Ok(mat) = mat_file.read("b") {
 ```
 Reading a Matlab array: c = [4, 2; 3, 7]
 ```
-# use matio_rs::{MatFile, Load};
+# use matio_rs::{MatFile, Load, Read, MatVar};
 # let mat_file = MatFile::load("data.mat")?;
-if let Ok(mat) = mat_file.read("c") {
+if let Result::<MatVar<Vec<f64>>,_>::Ok(mat) = mat_file.read("c") {
     println!("{mat}");
     let c: Vec<f64> = mat.into();
     println!("{c:?}");
@@ -104,21 +104,25 @@ mat_file.write(builder.build()?);
 ```
 Loading Matlab array into [nalgebra](https://docs.rs/nalgebra) vectors
 ```
-use matio_rs::{MatFile, Load};
+use matio_rs::{MatFile, Load, Read, MatVar};
 let mat_file = MatFile::load("arrays.mat")?;
-let a: nalgebra::DVector<f64> = mat_file.read("a")?.into();
+let a: nalgebra::DVector<f64> =
+    <MatFile as Read<MatVar<Vec<f64>>>>::read(&mat_file,"a")?.into();
 println!("{a}");
-let b: nalgebra::DVector<f64> = mat_file.read("b")?.into();
+let b: nalgebra::DVector<f64> =
+    <MatFile as Read<MatVar<Vec<f64>>>>::read(&mat_file,"b")?.into();
 println!("{b}");
 # Ok::<(), matio_rs::MatioError>(())
 ```
 Loading Matlab array into [nalgebra](https://docs.rs/nalgebra) matrices
 ```
-use matio_rs::{MatFile, Load};
+use matio_rs::{MatFile, Load, Read, MatVar};
 let mat_file = MatFile::load("arrays.mat")?;
-let a: Option<nalgebra::DMatrix<f64>> = mat_file.read("a")?.into();
+let a: Option<nalgebra::DMatrix<f64>> =
+    <MatFile as Read<MatVar<Vec<f64>>>>::read(&mat_file,"a")?.into();
 println!("{a:?}");
-let b: Option<nalgebra::DMatrix<f64>> = mat_file.read("b")?.into();
+let b: Option<nalgebra::DMatrix<f64>> =
+    <MatFile as Read<MatVar<Vec<f64>>>>::read(&mat_file,"b")?.into();
 println!("{b:?}");
 # Ok::<(), matio_rs::MatioError>(())
 ```*/
@@ -129,7 +133,7 @@ use thiserror::Error;
 mod builder;
 pub use builder::Builder;
 mod matfile;
-pub use matfile::{Load, MatFile, Save};
+pub use matfile::{Load, MatFile, Read, Save};
 mod matvar;
 pub use matvar::MatVar;
 mod matstruct;
@@ -161,11 +165,31 @@ pub type Result<T> = std::result::Result<T, MatioError>;
 /// Interface to Matlab data
 pub trait MatObject {
     fn as_mut_ptr(&mut self) -> *mut ffi::matvar_t;
+    fn as_ptr(&self) -> *const ffi::matvar_t;
+}
+pub trait MatObjectProperty {
+    fn rank(&self) -> usize;
+    fn dims(&self) -> Vec<u64>;
+    fn len(&self) -> usize;
+}
+impl<T: MatObject> MatObjectProperty for T {
+    fn rank(&self) -> usize {
+        unsafe { (*self.as_ptr()).rank as usize }
+    }
+    fn dims(&self) -> Vec<u64> {
+        unsafe {
+            let n = self.rank();
+            Vec::from_raw_parts((*self.as_ptr()).dims, n, n)
+        }
+    }
+    fn len(&self) -> usize {
+        self.dims().iter().fold(1, |p, d| p * d) as usize
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{matstruct::MatStructBuilder, Load, MatFile, MatStruct, MatVar, Save};
+    use crate::{matstruct::MatStructBuilder, Load, MatFile, MatStruct, MatVar, Read, Save};
 
     #[test]
     fn test_load() {
@@ -175,7 +199,7 @@ mod tests {
     #[test]
     fn test_read_scalar() {
         let mat_file = MatFile::load("data.mat").unwrap();
-        let mat = mat_file.read("a").unwrap();
+        let mat: MatVar<f64> = mat_file.read("a").unwrap();
         let a: f64 = mat.into();
         assert_eq!(a, std::f64::consts::PI);
     }
@@ -183,7 +207,7 @@ mod tests {
     #[test]
     fn test_read_1d() {
         let mat_file = MatFile::load("data.mat").unwrap();
-        let mat = mat_file.read("b").unwrap();
+        let mat: MatVar<Vec<f64>> = mat_file.read("b").unwrap();
         let b: Vec<f64> = mat.into();
         assert_eq!(b, vec![3f64, 1., 4., 1., 6.])
     }
@@ -191,7 +215,7 @@ mod tests {
     #[test]
     fn test_read_2d() {
         let mat_file = MatFile::load("data.mat").unwrap();
-        let mat = mat_file.read("c").unwrap();
+        let mat: MatVar<Vec<f64>> = mat_file.read("c").unwrap();
         let c: Vec<f64> = mat.into();
         assert_eq!(c, vec![4f64, 3., 2., 7.])
     }
@@ -205,10 +229,10 @@ mod tests {
             mat_file.write(MatVar::<Vec<f64>>::new("b", &mut b).unwrap());
         }
         let mat_file = MatFile::load("data.rs.mat").unwrap();
-        let mat = mat_file.read("a").unwrap();
+        let mat: MatVar<f64> = mat_file.read("a").unwrap();
         let a: f64 = mat.into();
         assert_eq!(a, 2f64.sqrt());
-        let mat = mat_file.read("b").unwrap();
+        let mat: MatVar<Vec<f64>> = mat_file.read("b").unwrap();
         let bb: Vec<f64> = mat.into();
         assert_eq!(b, bb);
     }
@@ -252,6 +276,20 @@ mod tests {
     }
 
     #[test]
+    fn test_struct_property() {
+        use crate::FieldIterator;
+        let u = vec![1, 2, 3];
+        let v = vec![4, 5, 6];
+        let mat = MatStruct::new("a")
+            .field("fa", u.iter())
+            .unwrap()
+            .field("fb", v.iter())
+            .unwrap()
+            .build()
+            .unwrap();
+        println!("{mat}");
+    }
+    #[test]
     fn test_save_nested_struct() {
         let mut builder = {
             use crate::Field;
@@ -283,10 +321,10 @@ mod tests {
     #[test]
     fn test_vector() {
         let mat_file = MatFile::load("arrays.mat").unwrap();
-        let mat = mat_file.read("a").unwrap();
+        let mat: MatVar<Vec<f64>> = mat_file.read("a").unwrap();
         let a: nalgebra::DVector<f64> = mat.into();
         println!("{a}");
-        let mat = mat_file.read("b").unwrap();
+        let mat: MatVar<Vec<f64>> = mat_file.read("b").unwrap();
         let b: nalgebra::DVector<f64> = mat.into();
         println!("{b}");
     }
@@ -295,10 +333,10 @@ mod tests {
     #[test]
     fn test_matrix() {
         let mat_file = MatFile::load("arrays.mat").unwrap();
-        let mat = mat_file.read("a").unwrap();
+        let mat: MatVar<Vec<f64>> = mat_file.read("a").unwrap();
         let a: Option<nalgebra::DMatrix<f64>> = mat.into();
         println!("{:}", a.unwrap());
-        let mat = mat_file.read("b").unwrap();
+        let mat: MatVar<Vec<f64>> = mat_file.read("b").unwrap();
         let b: Option<nalgebra::DMatrix<f64>> = mat.into();
         println!("{b:?}");
     }

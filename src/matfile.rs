@@ -1,9 +1,22 @@
-use crate::{Builder, MatVar, MatioError, Result, MatObject};
+use crate::{matvar::DataType, Builder, MatObject, MatStruct, MatVar, MatioError, Result};
 use std::{marker::PhantomData, path::Path};
 
 /// Mat file
 pub struct MatFile {
     pub(crate) mat_t: *mut ffi::mat_t,
+}
+impl MatFile {
+    pub fn read_ptr<S: Into<String>>(&self, name: S) -> Result<*mut ffi::matvar_t> {
+        let c_name = std::ffi::CString::new(name.into())?;
+        unsafe {
+            let matvar_t = ffi::Mat_VarRead(self.mat_t, c_name.as_ptr());
+            if matvar_t.is_null() {
+                Err(MatioError::MatVarRead(c_name.to_str().unwrap().to_string()))
+            } else {
+                Ok(matvar_t)
+            }
+        }
+    }
 }
 impl Drop for MatFile {
     fn drop(&mut self) {
@@ -18,27 +31,65 @@ pub trait Load {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self>
     where
         Self: Sized;
-    /// Reads a variable `name` from the mat file
-    fn read<T: 'static, S: Into<String>>(&self, name: S) -> Result<MatVar<T>>;
 }
 impl Load for MatFile {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
         Builder::new(path).load()
     }
-    fn read<T: 'static, S: Into<String>>(&self, name: S) -> Result<MatVar<T>> {
-        let c_name = std::ffi::CString::new(name.into())?;
-        let matvar_t = unsafe { ffi::Mat_VarRead(self.mat_t, c_name.as_ptr()) };
-        if matvar_t.is_null() {
-            Err(MatioError::MatVarRead(c_name.to_str().unwrap().to_string()))
-        } else {
-            MatVar {
-                matvar_t,
-                data_type: PhantomData,
+}
+/// Matlab variable reading interface
+pub trait Read<M> {
+    /// Reads a variable `name` from the mat file
+    fn read<S: Into<String> + Clone>(&self, name: S) -> Result<M>;
+}
+impl<T: 'static + DataType + Copy> Read<MatVar<T>> for MatFile {
+    fn read<S: Into<String> + Clone>(&self, name: S) -> Result<MatVar<T>> {
+        unsafe {
+            let matvar_t = self.read_ptr(name.clone())?;
+            if (*matvar_t).class_type == T::mat_c() && (*matvar_t).data_type == T::mat_t() {
+                Ok(MatVar {
+                    matvar_t,
+                    data_type: PhantomData,
+                })
+            } else {
+                Err(MatioError::MatVarRead(name.into()))
             }
-            .match_types()
         }
     }
 }
+impl<T: 'static + DataType> Read<MatVar<Vec<T>>> for MatFile {
+    fn read<S: Into<String> + Clone>(&self, name: S) -> Result<MatVar<Vec<T>>> {
+        unsafe {
+            let matvar_t = self.read_ptr(name.clone())?;
+            if (*matvar_t).class_type == T::mat_c() && (*matvar_t).data_type == T::mat_t() {
+                Ok(MatVar {
+                    matvar_t,
+                    data_type: PhantomData,
+                })
+            } else {
+                Err(MatioError::MatVarRead(name.into()))
+            }
+        }
+    }
+}
+impl Read<MatStruct> for MatFile {
+    fn read<S: Into<String> + Clone>(&self, name: S) -> Result<MatStruct> {
+        unsafe {
+            let matstruct_t = self.read_ptr(name.clone())?;
+            if (*matstruct_t).class_type == MatStruct::mat_c()
+                && (*matstruct_t).data_type == MatStruct::mat_t()
+            {
+                Ok(MatStruct {
+                    matvar_t: matstruct_t,
+                    fields: None,
+                })
+            } else {
+                Err(MatioError::MatVarRead(name.into()))
+            }
+        }
+    }
+}
+
 /// Mat file saving interface
 pub trait Save {
     /// saves a mat file to `path`

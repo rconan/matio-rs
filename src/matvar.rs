@@ -1,4 +1,4 @@
-use crate::{MatioError, Result,MatObject};
+use crate::{MatObject, MatioError, Result};
 use std::{
     any::{type_name, TypeId},
     fmt::Display,
@@ -53,6 +53,9 @@ impl<T: 'static> MatVar<T> {
 
 impl<T> MatObject for MatVar<T> {
     fn as_mut_ptr(&mut self) -> *mut ffi::matvar_t {
+        self.matvar_t
+    }
+    fn as_ptr(&self) -> *const ffi::matvar_t {
         self.matvar_t
     }
 }

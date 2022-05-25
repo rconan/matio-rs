@@ -1,11 +1,15 @@
-use crate::{matvar::DataType, MatObject, MatVar, MatioError, Result};
-use std::{collections::HashMap, ffi::CString};
+use crate::{matvar::DataType, MatObject, MatObjectProperty, MatVar, MatioError, Result};
+use std::{
+    collections::HashMap,
+    ffi::{CStr, CString},
+    fmt::Display,
+};
 
 /// Matlab structure
 pub struct MatStruct {
-    matstruct_t: *mut ffi::matvar_t,
+    pub(crate) matvar_t: *mut ffi::matvar_t,
     #[allow(dead_code)]
-    fields: Option<HashMap<String, Vec<Box<dyn MatObject>>>>,
+    pub(crate) fields: Option<HashMap<String, Vec<Box<dyn MatObject>>>>,
 }
 /// Matlab structure builder
 pub struct MatStructBuilder {
@@ -19,6 +23,50 @@ impl MatStruct {
             name: name.into(),
             fields: None,
         }
+    }
+    /// Get the number of fields
+    pub fn n_field(&self) -> usize {
+        unsafe { ffi::Mat_VarGetNumberOfFields(self.matvar_t) as usize }
+    }
+    /// Get the field names
+    pub fn fields_name(&self) -> std::result::Result<Vec<&str>, std::str::Utf8Error> {
+        unsafe {
+            let c_str: Vec<*mut i8> = {
+                let n = self.n_field();
+                Vec::from_raw_parts(
+                    ffi::Mat_VarGetStructFieldnames(self.matvar_t) as *mut *mut i8,
+                    n,
+                    n,
+                )
+            };
+            c_str
+                .into_iter()
+                .map(|s| CStr::from_ptr(s).to_str())
+                .collect()
+        }
+    }
+    /// Get the name of the structure
+    pub fn name(&self) -> std::result::Result<String, std::str::Utf8Error> {
+        let c_str = unsafe {
+            let ptr = (*self.matvar_t).name;
+            CStr::from_ptr(ptr as *const i8)
+        };
+        c_str.to_str().map(|s| s.into())
+    }
+}
+impl Display for MatStruct {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(
+            f,
+            r#"Matlab struct "{}" of dims:{:?}"#,
+            self.name().map_err(|_| std::fmt::Error)?,
+            self.dims()
+        )?;
+        writeln!(
+            f,
+            " with fields: {:?}",
+            self.fields_name().map_err(|_| std::fmt::Error)?
+        )
     }
 }
 impl MatStructBuilder {
@@ -71,7 +119,7 @@ impl MatStructBuilder {
                         }
                     }
                     Ok(MatStruct {
-                        matstruct_t,
+                        matvar_t: matstruct_t,
                         fields: Some(fields),
                     })
                 }
@@ -91,7 +139,10 @@ impl MatStructBuilder {
 
 impl MatObject for MatStruct {
     fn as_mut_ptr(&mut self) -> *mut ffi::matvar_t {
-        self.matstruct_t
+        self.matvar_t
+    }
+    fn as_ptr(&self) -> *const ffi::matvar_t {
+        self.matvar_t
     }
 }
 
