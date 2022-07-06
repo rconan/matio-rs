@@ -8,13 +8,13 @@ fn main() {
     let out = cmake::Config::new("matio")
         .define("MATIO_SHARED", "OFF")
         .define("MATIO_MAT73", "OFF")
-        .define("MATIO_WITH_ZLIB", "OFF")
         .build();
     println!(
         "cargo:rustc-link-search=native={}",
         out.join("lib").display()
     );
-    println!("cargo:rustc-link-lib=libmatio");
+    println!("cargo:rustc-link-lib=matio");
+    println!("cargo:rustc-link-lib=z");
     println!("cargo:rerun-if-changed=wrapper.h");
 
     let bindings = bindgen::Builder::default()
