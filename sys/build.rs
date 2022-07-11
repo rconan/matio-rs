@@ -1,10 +1,6 @@
 use std::path::PathBuf;
 
 fn main() {
-    if std::env::var("DOCS_RS").is_ok() {
-        return;
-    }
-
     let out = cmake::Config::new("matio")
         .define("MATIO_SHARED", "OFF")
         .define("MATIO_MAT73", "OFF")
