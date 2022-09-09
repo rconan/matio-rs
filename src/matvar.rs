@@ -114,21 +114,17 @@ impl<T: DataType> MatVar<Vec<T>> {
             })
         }
     }
-    pub fn array<S: Into<String>>(
-        name: S,
-        data: &mut [f64],
-        shape: (usize, usize),
-    ) -> Result<Self> {
+    pub fn array<S: Into<String>>(name: S, data: &[T], shape: (usize, usize)) -> Result<Self> {
         let c_name = std::ffi::CString::new(name.into())?;
         let mut dims = [shape.0 as u64, shape.1 as u64];
         let matvar_t = unsafe {
             ffi::Mat_VarCreate(
                 c_name.as_ptr(),
-                ffi::matio_classes_MAT_C_DOUBLE,
-                ffi::matio_types_MAT_T_DOUBLE,
+                <T as DataType>::mat_c(),
+                <T as DataType>::mat_t(),
                 2,
                 dims.as_mut_ptr(),
-                data.as_mut_ptr() as *mut std::ffi::c_void,
+                data.as_ptr() as *mut std::ffi::c_void,
                 0,
             )
         };
