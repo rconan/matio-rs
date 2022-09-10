@@ -244,6 +244,19 @@ mod tests {
     }
 
     #[test]
+    fn test_2d_array() {
+        let a = vec![vec![1f64; 3], vec![2f64; 3]];
+        let mat_file = MatFile::save("array.mat").unwrap();
+        let mat: MatVar<Vec<f64>> = MatVar::array(
+            "a",
+            a.into_iter().flatten().collect::<Vec<f64>>().as_mut_slice(),
+            (3, 2),
+        )
+        .unwrap();
+        mat_file.write(mat);
+    }
+
+    #[test]
     fn test_save() {
         let mut b = (0..5).map(|x| (x as f64).cosh()).collect::<Vec<f64>>();
         {
