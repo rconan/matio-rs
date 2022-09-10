@@ -149,7 +149,12 @@ macro_rules! scalar {
                 unsafe { ((*mat_var.matvar_t).data as *mut $rs).read() }
             }
         }
-	    )+
+        impl<S:Into<String>+ Clone> From<(S,$rs)> for MatVar<$rs> {
+            fn from((name,data): (S, $rs)) -> Self {
+                MatVar::<$rs>::new(name.clone(),data).expect(&format!("failed to create Matlab variable {:}",name.into()))
+            }
+        }
+    )+
     };
 }
 scalar!(f64, f32, i8, i16, i32, i64, u8, u16, u32, u64);
@@ -172,6 +177,14 @@ impl<T: DataType> From<MatVar<Vec<T>>> for Vec<T> {
             value.set_len(length);
             value
         }
+    }
+}
+impl<S: Into<String> + Clone, T: DataType> From<(S, Vec<T>)> for MatVar<Vec<T>> {
+    fn from((name, data): (S, Vec<T>)) -> Self {
+        MatVar::<Vec<T>>::new(name.clone(), data.as_slice()).expect(&format!(
+            "failed to create Matlab variable {:}",
+            name.into()
+        ))
     }
 }
 

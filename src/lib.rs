@@ -133,7 +133,7 @@ use thiserror::Error;
 mod builder;
 pub use builder::Builder;
 mod matfile;
-pub use matfile::{Load, MatFile, Read, Save};
+pub use matfile::{Get, Load, MatFile, Read, Save, Set};
 mod matvar;
 pub use matvar::MatVar;
 mod matstruct;
@@ -189,7 +189,9 @@ impl<T: MatObject> MatObjectProperty for T {
 
 #[cfg(test)]
 mod tests {
-    use crate::{matstruct::MatStructBuilder, Load, MatFile, MatStruct, MatVar, Read, Save};
+    use crate::{
+        matstruct::MatStructBuilder, Get, Load, MatFile, MatStruct, MatVar, Read, Save, Set,
+    };
 
     #[test]
     fn test_load() {
@@ -205,6 +207,13 @@ mod tests {
     }
 
     #[test]
+    fn test_get_scalar() {
+        let mat_file = MatFile::load("data.mat").unwrap();
+        let a: f64 = mat_file.get("a").unwrap();
+        assert_eq!(a, std::f64::consts::PI);
+    }
+
+    #[test]
     fn test_read_1d() {
         let mat_file = MatFile::load("data.mat").unwrap();
         let mat: MatVar<Vec<f64>> = mat_file.read("b").unwrap();
@@ -213,10 +222,24 @@ mod tests {
     }
 
     #[test]
+    fn test_get_1d() {
+        let mat_file = MatFile::load("data.mat").unwrap();
+        let b: Vec<f64> = mat_file.get("b").unwrap();
+        assert_eq!(b, vec![3f64, 1., 4., 1., 6.])
+    }
+
+    #[test]
     fn test_read_2d() {
         let mat_file = MatFile::load("data.mat").unwrap();
         let mat: MatVar<Vec<f64>> = mat_file.read("c").unwrap();
         let c: Vec<f64> = mat.into();
+        assert_eq!(c, vec![4f64, 3., 2., 7.])
+    }
+
+    #[test]
+    fn test_get_2d() {
+        let mat_file = MatFile::load("data.mat").unwrap();
+        let c: Vec<f64> = mat_file.get("c").unwrap();
         assert_eq!(c, vec![4f64, 3., 2., 7.])
     }
 
@@ -234,6 +257,20 @@ mod tests {
         assert_eq!(a, 2f64.sqrt());
         let mat: MatVar<Vec<f64>> = mat_file.read("b").unwrap();
         let bb: Vec<f64> = mat.into();
+        assert_eq!(b, bb);
+    }
+
+    #[test]
+    fn test_set() {
+        let b = (0..5).map(|x| (x as f64).cosh()).collect::<Vec<f64>>();
+        {
+            let mat_file = MatFile::save("data.rs.mat").unwrap();
+            mat_file.set("a", 2f64.sqrt()).set("b", b.clone());
+        }
+        let mat_file = MatFile::load("data.rs.mat").unwrap();
+        let a: f64 = mat_file.get("a").unwrap();
+        assert_eq!(a, 2f64.sqrt());
+        let bb: Vec<f64> = mat_file.get("b").unwrap();
         assert_eq!(b, bb);
     }
 

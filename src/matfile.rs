@@ -90,6 +90,19 @@ impl Read<MatStruct> for MatFile {
     }
 }
 
+pub trait Get<T> {
+    fn get<S: Into<String> + Clone>(&self, name: S) -> Result<T>;
+}
+impl<T> Get<T> for MatFile
+where
+    MatFile: Read<MatVar<T>>,
+    MatVar<T>: Into<T>,
+{
+    fn get<S: Into<String> + Clone>(&self, name: S) -> Result<T> {
+        self.read(name).map(|mat_var| mat_var.into())
+    }
+}
+
 /// Mat file saving interface
 pub trait Save {
     /// saves a mat file to `path`
@@ -112,5 +125,24 @@ impl Save for MatFile {
             );
         }
         self
+    }
+}
+
+pub trait Set<T> {
+    fn set<S: Into<String> + Clone>(&self, name: S, data: T) -> &Self
+    where
+        (S, T): Into<MatVar<T>>,
+        S: Into<String> + Clone;
+}
+impl<T> Set<T> for MatFile
+where
+    MatFile: Save,
+{
+    fn set<S>(&self, name: S, data: T) -> &Self
+    where
+        (S, T): Into<MatVar<T>>,
+        S: Into<String> + Clone,
+    {
+        self.write((name, data).into())
     }
 }
