@@ -96,14 +96,14 @@ impl Read<MatStruct> for MatFile {
 /// Matlab file high-level interface to [Load]
 pub trait Get<T> {
     /// Gets the variable `name` from a [MatFile] into a Rust data type
-    fn get<S: Into<String> + Clone>(&self, name: S) -> Result<T>;
+    fn var<S: Into<String> + Clone>(&self, name: S) -> Result<T>;
 }
 impl<T> Get<T> for MatFile
 where
     MatFile: Read<MatVar<T>>,
     MatVar<T>: Into<T>,
 {
-    fn get<S: Into<String> + Clone>(&self, name: S) -> Result<T> {
+    fn var<S: Into<String> + Clone>(&self, name: S) -> Result<T> {
         self.read(name).map(|mat_var| mat_var.into())
     }
 }
@@ -136,7 +136,7 @@ impl Save for MatFile {
 /// Matlab file high-level interface to [Save]
 pub trait Set<T> {
     /// Sets a Rust variable into a [MatFile] with `name`
-    fn set<S>(&self, name: S, data: &T) -> &Self
+    fn var<S>(&self, name: S, data: &T) -> &Self
     where
         (S, T): Into<MatVar<T>>,
         S: Into<String>;
@@ -146,7 +146,7 @@ where
     T: Clone,
     MatFile: Save,
 {
-    fn set<S>(&self, name: S, data: &T) -> &Self
+    fn var<S>(&self, name: S, data: &T) -> &Self
     where
         (S, T): Into<MatVar<T>>,
         S: Into<String>,

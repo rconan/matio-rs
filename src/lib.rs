@@ -18,7 +18,7 @@ Reading a scalar Matlab variable: a = π
 use matio_rs::{MatFile, Load, Get};
 use std::path::Path;
 let data_path = Path::new("data").join("data").with_extension("mat");
-let a: f64 = MatFile::load(data_path)?.get("a")?;
+let a: f64 = MatFile::load(data_path)?.var("a")?;
 println!("{a:?}");
 # Ok::<(), matio_rs::MatioError>(())
 ```
@@ -27,7 +27,7 @@ Reading a Matlab vector: b = [3.0, 1.0, 4.0, 1.0, 6.0]
 use matio_rs::{MatFile, Load, Get};
 use std::path::Path;
 let data_path = Path::new("data").join("data").with_extension("mat");
-let b: Vec<f64> = MatFile::load(data_path)?.get("b")?;
+let b: Vec<f64> = MatFile::load(data_path)?.var("b")?;
 println!("{b:?}");
 # Ok::<(), matio_rs::MatioError>(())
 ```
@@ -36,7 +36,7 @@ Reading a Matlab array: c = [4, 2; 3, 7]
 use matio_rs::{MatFile, Load, Get};
 use std::path::Path;
 let data_path = Path::new("data").join("data").with_extension("mat");
-let c: Vec<f64> = MatFile::load(data_path)?.get("c")?;
+let c: Vec<f64> = MatFile::load(data_path)?.var("c")?;
 println!("{c:?}");
 # Ok::<(), matio_rs::MatioError>(())
 ```
@@ -47,8 +47,8 @@ use std::path::Path;
 let data_path = Path::new("data").join("data-rs").with_extension("mat");
 let mut b = (0..5).map(|x| (x as f64).cosh()).collect::<Vec<f64>>();
 MatFile::save(data_path)?
-    .set("a", &2f64.sqrt())
-    .set("b", &b);
+    .var("a", &2f64.sqrt())
+    .var("b", &b);
 # Ok::<(), matio_rs::MatioError>(())
 ```
 Writing a Matlab structure to a mat file
@@ -197,9 +197,7 @@ impl<T: MatObject> MatObjectProperty for T {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        matstruct::MatStructBuilder, Get, Load, MatFile, MatStruct, MatVar, Read, Save, Set,
-    };
+    use crate::{matstruct::MatStructBuilder, Load, MatFile, MatStruct, MatVar, Read, Save};
     use std::path::{Path, PathBuf};
 
     pub fn root() -> PathBuf {
@@ -221,8 +219,9 @@ mod tests {
 
     #[test]
     fn test_get_scalar() {
+        use crate::Get;
         let mat_file = MatFile::load(root().join("data.mat")).unwrap();
-        let a: f64 = mat_file.get("a").unwrap();
+        let a: f64 = mat_file.var("a").unwrap();
         assert_eq!(a, std::f64::consts::PI);
     }
 
@@ -236,8 +235,9 @@ mod tests {
 
     #[test]
     fn test_get_1d() {
+        use crate::Get;
         let mat_file = MatFile::load(root().join("data.mat")).unwrap();
-        let b: Vec<f64> = mat_file.get("b").unwrap();
+        let b: Vec<f64> = mat_file.var("b").unwrap();
         assert_eq!(b, vec![3f64, 1., 4., 1., 6.])
     }
 
@@ -251,8 +251,9 @@ mod tests {
 
     #[test]
     fn test_get_2d() {
+        use crate::Get;
         let mat_file = MatFile::load(root().join("data.mat")).unwrap();
-        let c: Vec<f64> = mat_file.get("c").unwrap();
+        let c: Vec<f64> = mat_file.var("c").unwrap();
         assert_eq!(c, vec![4f64, 3., 2., 7.])
     }
 
@@ -291,12 +292,14 @@ mod tests {
         let b = (0..5).map(|x| (x as f64).cosh()).collect::<Vec<f64>>();
         {
             let mat_file = MatFile::save(root().join("data.rs.mat")).unwrap();
-            mat_file.set("a", &2f64.sqrt()).set("b", &b);
+            <MatFile as crate::Set<f64>>::var(&mat_file, "a", &2f64.sqrt());
+            <MatFile as crate::Set<Vec<f64>>>::var(&mat_file, "b", &b);
         }
+        use crate::Get;
         let mat_file = MatFile::load(root().join("data.rs.mat")).unwrap();
-        let a: f64 = mat_file.get("a").unwrap();
+        let a: f64 = mat_file.var("a").unwrap();
         assert_eq!(a, 2f64.sqrt());
-        let bb: Vec<f64> = mat_file.get("b").unwrap();
+        let bb: Vec<f64> = mat_file.var("b").unwrap();
         assert_eq!(b, bb);
     }
 
@@ -310,11 +313,12 @@ mod tests {
 
     #[test]
     fn test_set_polytype() {
+        use crate::Set;
         MatFile::save(root().join("data-poly.mat"))
             .unwrap()
-            .set("a", &1i8)
-            .set("b", &2f32)
-            .set("c", &vec![3u16; 3]);
+            .var("a", &1i8)
+            .var("b", &2f32)
+            .var("c", &vec![3u16; 3]);
     }
     #[test]
     fn test_save_struct() {
