@@ -43,9 +43,10 @@ pub trait Read<M> {
     fn read<S: Into<String> + Clone>(&self, name: S) -> Result<M>;
 }
 impl<T: 'static + DataType + Copy> Read<MatVar<T>> for MatFile {
-    fn read<S: Into<String> + Clone>(&self, name: S) -> Result<MatVar<T>> {
+    fn read<S: Into<String>>(&self, name: S) -> Result<MatVar<T>> {
+        let name: String = name.into();
         unsafe {
-            let matvar_t = self.read_ptr(name.clone())?;
+            let matvar_t = self.read_ptr(name.as_str())?;
             if (*matvar_t).class_type == T::mat_c() && (*matvar_t).data_type == T::mat_t() {
                 Ok(MatVar {
                     matvar_t,
@@ -58,9 +59,10 @@ impl<T: 'static + DataType + Copy> Read<MatVar<T>> for MatFile {
     }
 }
 impl<T: 'static + DataType> Read<MatVar<Vec<T>>> for MatFile {
-    fn read<S: Into<String> + Clone>(&self, name: S) -> Result<MatVar<Vec<T>>> {
+    fn read<S: Into<String>>(&self, name: S) -> Result<MatVar<Vec<T>>> {
+        let name: String = name.into();
         unsafe {
-            let matvar_t = self.read_ptr(name.clone())?;
+            let matvar_t = self.read_ptr(name.as_str())?;
             if (*matvar_t).class_type == T::mat_c() && (*matvar_t).data_type == T::mat_t() {
                 Ok(MatVar {
                     matvar_t,
@@ -73,9 +75,10 @@ impl<T: 'static + DataType> Read<MatVar<Vec<T>>> for MatFile {
     }
 }
 impl Read<MatStruct> for MatFile {
-    fn read<S: Into<String> + Clone>(&self, name: S) -> Result<MatStruct> {
+    fn read<S: Into<String>>(&self, name: S) -> Result<MatStruct> {
+        let name: String = name.into();
         unsafe {
-            let matstruct_t = self.read_ptr(name.clone())?;
+            let matstruct_t = self.read_ptr(name.as_str())?;
             if (*matstruct_t).class_type == MatStruct::mat_c()
                 && (*matstruct_t).data_type == MatStruct::mat_t()
             {
@@ -84,13 +87,15 @@ impl Read<MatStruct> for MatFile {
                     fields: None,
                 })
             } else {
-                Err(MatioError::MatVarRead(name.into()))
+                Err(MatioError::MatVarRead(name))
             }
         }
     }
 }
 
+/// Matlab file high-level interface to [Load]
 pub trait Get<T> {
+    /// Gets the variable `name` from a [MatFile] into a Rust data type
     fn get<S: Into<String> + Clone>(&self, name: S) -> Result<T>;
 }
 impl<T> Get<T> for MatFile
@@ -128,21 +133,24 @@ impl Save for MatFile {
     }
 }
 
+/// Matlab file high-level interface to [Save]
 pub trait Set<T> {
-    fn set<S: Into<String> + Clone>(&self, name: S, data: T) -> &Self
+    /// Sets a Rust variable into a [MatFile] with `name`
+    fn set<S>(&self, name: S, data: &T) -> &Self
     where
         (S, T): Into<MatVar<T>>,
-        S: Into<String> + Clone;
+        S: Into<String>;
 }
 impl<T> Set<T> for MatFile
 where
+    T: Clone,
     MatFile: Save,
 {
-    fn set<S>(&self, name: S, data: T) -> &Self
+    fn set<S>(&self, name: S, data: &T) -> &Self
     where
         (S, T): Into<MatVar<T>>,
-        S: Into<String> + Clone,
+        S: Into<String>,
     {
-        self.write((name, data).into())
+        self.write((name, data.clone()).into())
     }
 }

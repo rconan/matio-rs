@@ -7,50 +7,38 @@ MATLAB MAT file I/O C library
 ## Examples
 Loading a mat file
 ```
-use matio_rs::{MatFile, Load, Read, MatVar};
+use matio_rs::{MatFile, Load};
 let mat_file = MatFile::load("data.mat")?;
 # Ok::<(), matio_rs::MatioError>(())
 ```
 Reading a scalar Matlab variable: a = π
 ```
-# use matio_rs::{MatFile, Load, Read, MatVar};
-# let mat_file = MatFile::load("data.mat")?;
-if let Result::<MatVar<f64>,_>::Ok(mat) = mat_file.read("a") {
-    println!("{mat}");
-    let a: f64 = mat.into();
-    println!("{a:?}");
-}
+use matio_rs::{MatFile, Load, Get};
+let a: f64 = MatFile::load("data.mat")?.get("a")?;
+println!("{a:?}");
 # Ok::<(), matio_rs::MatioError>(())
 ```
 Reading a Matlab vector: b = [3.0, 1.0, 4.0, 1.0, 6.0]
 ```
-# use matio_rs::{MatFile, Load, Read, MatVar};
-# let mat_file = MatFile::load("data.mat")?;
-if let Result::<MatVar<Vec<f64>>,_>::Ok(mat) = mat_file.read("b") {
-    println!("{mat}");
-    let b: Vec<f64> = mat.into();
-    println!("{b:?}");
-}
+use matio_rs::{MatFile, Load, Get};
+let b: Vec<f64> = MatFile::load("data.mat")?.get("b")?;
+println!("{b:?}");
 # Ok::<(), matio_rs::MatioError>(())
 ```
 Reading a Matlab array: c = [4, 2; 3, 7]
 ```
-# use matio_rs::{MatFile, Load, Read, MatVar};
-# let mat_file = MatFile::load("data.mat")?;
-if let Result::<MatVar<Vec<f64>>,_>::Ok(mat) = mat_file.read("c") {
-    println!("{mat}");
-    let c: Vec<f64> = mat.into();
-    println!("{c:?}");
-}
+use matio_rs::{MatFile, Load, Get};
+let c: Vec<f64> = MatFile::load("data.mat")?.get("c")?;
+println!("{c:?}");
 # Ok::<(), matio_rs::MatioError>(())
 ```
 Saving to a mat file
 ```
-use matio_rs::{MatFile, MatVar, Save};
-let mat_file = MatFile::save("data.rs.mat")?;
+use matio_rs::{MatFile, Save, Set};
 let mut b = (0..5).map(|x| (x as f64).cosh()).collect::<Vec<f64>>();
-mat_file.write(MatVar::<f64>::new("a", 2f64.sqrt())?)
-        .write(MatVar::<Vec<f64>>::new("b", &mut b)?);
+MatFile::save("data.rs.mat")?
+    .set("a", &2f64.sqrt())
+    .set("b", &b);
 # Ok::<(), matio_rs::MatioError>(())
 ```
 Writing a Matlab structure to a mat file
@@ -167,7 +155,7 @@ pub trait MatObject {
     fn as_mut_ptr(&mut self) -> *mut ffi::matvar_t;
     fn as_ptr(&self) -> *const ffi::matvar_t;
 }
-pub trait MatObjectProperty {
+pub(crate) trait MatObjectProperty {
     fn rank(&self) -> usize;
     fn dims(&self) -> Vec<u64>;
     fn len(&self) -> usize;
@@ -278,7 +266,7 @@ mod tests {
         let b = (0..5).map(|x| (x as f64).cosh()).collect::<Vec<f64>>();
         {
             let mat_file = MatFile::save("data.rs.mat").unwrap();
-            mat_file.set("a", 2f64.sqrt()).set("b", b.clone());
+            mat_file.set("a", &2f64.sqrt()).set("b", &b);
         }
         let mat_file = MatFile::load("data.rs.mat").unwrap();
         let a: f64 = mat_file.get("a").unwrap();
@@ -295,6 +283,14 @@ mod tests {
         mat_file.write(MatVar::<Vec<u16>>::new("c", &mut [3u16; 3]).unwrap());
     }
 
+    #[test]
+    fn test_set_polytype() {
+        let mat_file = MatFile::save("data-poly.mat")
+            .unwrap()
+            .set("a", &1i8)
+            .set("b", &2f32)
+            .set("c", &vec![3u16; 3]);
+    }
     #[test]
     fn test_save_struct() {
         use crate::Field;
