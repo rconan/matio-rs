@@ -8,35 +8,45 @@ MATLAB MAT file I/O C library
 Loading a mat file
 ```
 use matio_rs::{MatFile, Load};
-let mat_file = MatFile::load("data.mat")?;
+use std::path::Path;
+let data_path = Path::new("data").join("data").with_extension("mat");
+let mat_file = MatFile::load(data_path)?;
 # Ok::<(), matio_rs::MatioError>(())
 ```
 Reading a scalar Matlab variable: a = π
 ```
 use matio_rs::{MatFile, Load, Get};
-let a: f64 = MatFile::load("data.mat")?.get("a")?;
+use std::path::Path;
+let data_path = Path::new("data").join("data").with_extension("mat");
+let a: f64 = MatFile::load(data_path)?.get("a")?;
 println!("{a:?}");
 # Ok::<(), matio_rs::MatioError>(())
 ```
 Reading a Matlab vector: b = [3.0, 1.0, 4.0, 1.0, 6.0]
 ```
 use matio_rs::{MatFile, Load, Get};
-let b: Vec<f64> = MatFile::load("data.mat")?.get("b")?;
+use std::path::Path;
+let data_path = Path::new("data").join("data").with_extension("mat");
+let b: Vec<f64> = MatFile::load(data_path)?.get("b")?;
 println!("{b:?}");
 # Ok::<(), matio_rs::MatioError>(())
 ```
 Reading a Matlab array: c = [4, 2; 3, 7]
 ```
 use matio_rs::{MatFile, Load, Get};
-let c: Vec<f64> = MatFile::load("data.mat")?.get("c")?;
+use std::path::Path;
+let data_path = Path::new("data").join("data").with_extension("mat");
+let c: Vec<f64> = MatFile::load(data_path)?.get("c")?;
 println!("{c:?}");
 # Ok::<(), matio_rs::MatioError>(())
 ```
 Saving to a mat file
 ```
 use matio_rs::{MatFile, Save, Set};
+use std::path::Path;
+let data_path = Path::new("data").join("data-rs").with_extension("mat");
 let mut b = (0..5).map(|x| (x as f64).cosh()).collect::<Vec<f64>>();
-MatFile::save("data.rs.mat")?
+MatFile::save(data_path)?
     .set("a", &2f64.sqrt())
     .set("b", &b);
 # Ok::<(), matio_rs::MatioError>(())
@@ -44,17 +54,20 @@ MatFile::save("data.rs.mat")?
 Writing a Matlab structure to a mat file
 ```
 use matio_rs::{MatFile, MatStruct, Save, Field};
+use std::path::Path;
 let mat = MatStruct::new("s")
             .field("fa", &123f64)?
             .field("fb", &vec![0i32, 1, 2, 3, 4])?
             .build()?;
-let mat_file = MatFile::save("struct.mat")?;
+let data_path = Path::new("data").join("struct").with_extension("mat");
+let mat_file = MatFile::save(data_path)?;
 mat_file.write(mat);
 # Ok::<(), matio_rs::MatioError>(())
 ```
 Writing a Matlab structure array to a mat file
 ```
 use matio_rs::{MatFile, MatStruct, Save, FieldIterator};
+use std::path::Path;
 let u = vec![1u32,2,3];
 let v: Vec<_> = u.iter()
                   .map(|&x| (0..x).map(|y| y as f64 *(x as f64)/5.).collect::<Vec<f64>>())
@@ -63,13 +76,15 @@ let mat = MatStruct::new("s")
             .field("fa", u.iter())?
             .field("fb", v.iter())?
             .build()?;
-let mat_file = MatFile::save("struct-array.mat")?;
+let data_path = Path::new("data").join("struct-array").with_extension("mat");
+let mat_file = MatFile::save(data_path)?;
 mat_file.write(mat);
 # Ok::<(), matio_rs::MatioError>(())
 ```
 Writing a nested Matlab structure to a mat file
 ```
 use matio_rs::{MatFile, MatStruct, MatStructBuilder, Save};
+use std::path::Path;
 let mut builder = {
     use matio_rs::Field;
     MatStruct::new("a")
@@ -86,14 +101,17 @@ let nested = {
 builder = <MatStructBuilder as matio_rs::FieldMatObject<MatStruct>>::field(
     builder, "nested", nested,
 )?;
-let mat_file = MatFile::save("struct_nested.mat").unwrap();
+let data_path = Path::new("data").join("struct_nested").with_extension("mat");
+let mat_file = MatFile::save(data_path).unwrap();
 mat_file.write(builder.build()?);
 # Ok::<(), matio_rs::MatioError>(())
 ```
 Loading Matlab array into [nalgebra](https://docs.rs/nalgebra) vectors
 ```
 use matio_rs::{MatFile, Load, Read, MatVar};
-let mat_file = MatFile::load("arrays.mat")?;
+use std::path::Path;
+let data_path = Path::new("data").join("arrays").with_extension("mat");
+let mat_file = MatFile::load(data_path)?;
 let a: nalgebra::DVector<f64> =
     <MatFile as Read<MatVar<Vec<f64>>>>::read(&mat_file,"a")?.into();
 println!("{a}");
@@ -105,7 +123,9 @@ println!("{b}");
 Loading Matlab array into [nalgebra](https://docs.rs/nalgebra) matrices
 ```
 use matio_rs::{MatFile, Load, Read, MatVar};
-let mat_file = MatFile::load("arrays.mat")?;
+use std::path::Path;
+let data_path = Path::new("data").join("arrays").with_extension("mat");
+let mat_file = MatFile::load(data_path)?;
 let a: Option<nalgebra::DMatrix<f64>> =
     <MatFile as Read<MatVar<Vec<f64>>>>::read(&mat_file,"a")?.into();
 println!("{a:?}");
@@ -180,15 +200,20 @@ mod tests {
     use crate::{
         matstruct::MatStructBuilder, Get, Load, MatFile, MatStruct, MatVar, Read, Save, Set,
     };
+    use std::path::{Path, PathBuf};
+
+    pub fn root() -> PathBuf {
+        Path::new("data").into()
+    }
 
     #[test]
     fn test_load() {
-        let _mat_file = MatFile::load("data.mat").unwrap();
+        let _mat_file = MatFile::load(root().join("data.mat")).unwrap();
     }
 
     #[test]
     fn test_read_scalar() {
-        let mat_file = MatFile::load("data.mat").unwrap();
+        let mat_file = MatFile::load(root().join("data.mat")).unwrap();
         let mat: MatVar<f64> = mat_file.read("a").unwrap();
         let a: f64 = mat.into();
         assert_eq!(a, std::f64::consts::PI);
@@ -196,14 +221,14 @@ mod tests {
 
     #[test]
     fn test_get_scalar() {
-        let mat_file = MatFile::load("data.mat").unwrap();
+        let mat_file = MatFile::load(root().join("data.mat")).unwrap();
         let a: f64 = mat_file.get("a").unwrap();
         assert_eq!(a, std::f64::consts::PI);
     }
 
     #[test]
     fn test_read_1d() {
-        let mat_file = MatFile::load("data.mat").unwrap();
+        let mat_file = MatFile::load(root().join("data.mat")).unwrap();
         let mat: MatVar<Vec<f64>> = mat_file.read("b").unwrap();
         let b: Vec<f64> = mat.into();
         assert_eq!(b, vec![3f64, 1., 4., 1., 6.])
@@ -211,14 +236,14 @@ mod tests {
 
     #[test]
     fn test_get_1d() {
-        let mat_file = MatFile::load("data.mat").unwrap();
+        let mat_file = MatFile::load(root().join("data.mat")).unwrap();
         let b: Vec<f64> = mat_file.get("b").unwrap();
         assert_eq!(b, vec![3f64, 1., 4., 1., 6.])
     }
 
     #[test]
     fn test_read_2d() {
-        let mat_file = MatFile::load("data.mat").unwrap();
+        let mat_file = MatFile::load(root().join("data.mat")).unwrap();
         let mat: MatVar<Vec<f64>> = mat_file.read("c").unwrap();
         let c: Vec<f64> = mat.into();
         assert_eq!(c, vec![4f64, 3., 2., 7.])
@@ -226,7 +251,7 @@ mod tests {
 
     #[test]
     fn test_get_2d() {
-        let mat_file = MatFile::load("data.mat").unwrap();
+        let mat_file = MatFile::load(root().join("data.mat")).unwrap();
         let c: Vec<f64> = mat_file.get("c").unwrap();
         assert_eq!(c, vec![4f64, 3., 2., 7.])
     }
@@ -234,7 +259,7 @@ mod tests {
     #[test]
     fn test_2d_array() {
         let a = vec![vec![1f64; 3], vec![2f64; 3]];
-        let mat_file = MatFile::save("array.mat").unwrap();
+        let mat_file = MatFile::save(root().join("array.mat")).unwrap();
         let mat: MatVar<Vec<f64>> = MatVar::array(
             "a",
             a.into_iter().flatten().collect::<Vec<f64>>().as_mut_slice(),
@@ -248,11 +273,11 @@ mod tests {
     fn test_save() {
         let mut b = (0..5).map(|x| (x as f64).cosh()).collect::<Vec<f64>>();
         {
-            let mat_file = MatFile::save("data.rs.mat").unwrap();
+            let mat_file = MatFile::save(root().join("data.rs.mat")).unwrap();
             mat_file.write(MatVar::<f64>::new("a", 2f64.sqrt()).unwrap());
             mat_file.write(MatVar::<Vec<f64>>::new("b", &mut b).unwrap());
         }
-        let mat_file = MatFile::load("data.rs.mat").unwrap();
+        let mat_file = MatFile::load(root().join("data.rs.mat")).unwrap();
         let mat: MatVar<f64> = mat_file.read("a").unwrap();
         let a: f64 = mat.into();
         assert_eq!(a, 2f64.sqrt());
@@ -265,10 +290,10 @@ mod tests {
     fn test_set() {
         let b = (0..5).map(|x| (x as f64).cosh()).collect::<Vec<f64>>();
         {
-            let mat_file = MatFile::save("data.rs.mat").unwrap();
+            let mat_file = MatFile::save(root().join("data.rs.mat")).unwrap();
             mat_file.set("a", &2f64.sqrt()).set("b", &b);
         }
-        let mat_file = MatFile::load("data.rs.mat").unwrap();
+        let mat_file = MatFile::load(root().join("data.rs.mat")).unwrap();
         let a: f64 = mat_file.get("a").unwrap();
         assert_eq!(a, 2f64.sqrt());
         let bb: Vec<f64> = mat_file.get("b").unwrap();
@@ -277,7 +302,7 @@ mod tests {
 
     #[test]
     fn test_save_polytype() {
-        let mat_file = MatFile::save("data-poly.mat").unwrap();
+        let mat_file = MatFile::save(root().join("data-poly.mat")).unwrap();
         mat_file.write(MatVar::<i8>::new("a", 1i8).unwrap());
         mat_file.write(MatVar::<f32>::new("b", 2f32).unwrap());
         mat_file.write(MatVar::<Vec<u16>>::new("c", &mut [3u16; 3]).unwrap());
@@ -285,7 +310,7 @@ mod tests {
 
     #[test]
     fn test_set_polytype() {
-        let mat_file = MatFile::save("data-poly.mat")
+        MatFile::save(root().join("data-poly.mat"))
             .unwrap()
             .set("a", &1i8)
             .set("b", &2f32)
@@ -301,7 +326,7 @@ mod tests {
             .unwrap()
             .build()
             .unwrap();
-        let mat_file = MatFile::save("struct.mat").unwrap();
+        let mat_file = MatFile::save(root().join("struct.mat")).unwrap();
         mat_file.write(mat);
     }
 
@@ -317,7 +342,7 @@ mod tests {
             .unwrap()
             .build()
             .unwrap();
-        let mat_file = MatFile::save("struct.mat").unwrap();
+        let mat_file = MatFile::save(root().join("struct.mat")).unwrap();
         mat_file.write(mat);
     }
 
@@ -359,14 +384,14 @@ mod tests {
             builder, "nested", nested,
         )
         .unwrap();
-        let mat_file = MatFile::save("struct_nested.mat").unwrap();
+        let mat_file = MatFile::save(root().join("struct_nested.mat")).unwrap();
         mat_file.write(builder.build().unwrap());
     }
 
     #[cfg(feature = "nalgebra")]
     #[test]
     fn test_vector() {
-        let mat_file = MatFile::load("arrays.mat").unwrap();
+        let mat_file = MatFile::load(root().join("arrays.mat")).unwrap();
         let mat: MatVar<Vec<f64>> = mat_file.read("a").unwrap();
         let a: nalgebra::DVector<f64> = mat.into();
         println!("{a}");
@@ -378,7 +403,7 @@ mod tests {
     #[cfg(feature = "nalgebra")]
     #[test]
     fn test_matrix() {
-        let mat_file = MatFile::load("arrays.mat").unwrap();
+        let mat_file = MatFile::load(root().join("arrays.mat")).unwrap();
         let mat: MatVar<Vec<f64>> = mat_file.read("a").unwrap();
         let a: Option<nalgebra::DMatrix<f64>> = mat.into();
         println!("{:}", a.unwrap());
