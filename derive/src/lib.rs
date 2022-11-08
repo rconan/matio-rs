@@ -66,38 +66,31 @@ fn get_fields(input: &DeriveInput) -> syn::Result<TokenStream> {
 }
 
 fn get_type(ty: &Type) -> syn::Result<Ident> {
-    if let Type::Path(TypePath { path, .. }) = ty {
-        match path.segments.first() {
-            Some(PathSegment { ident, arguments }) => {
-                if ident.to_string() == "Vec" {
-                    match arguments {
-                        PathArguments::AngleBracketed(AngleBracketedGenericArguments {
-                            args,
-                            ..
-                        }) => {
-                            if let Some(syn::GenericArgument::Type(Type::Path(TypePath {
-                                path,
-                                ..
-                            }))) = args.first()
-                            {
-                                if let Some(PathSegment { ident, .. }) = path.segments.first() {
-                                    Ok(ident.clone())
-                                } else {
-                                    Err(syn::Error::new_spanned(ty, "Vec type arguments type is empty"))
-                                }
-                            } else {
-                                Err(syn::Error::new_spanned(ty, "Vec type arguments is empty"))
-                            }
-                        }
-                        _ => Err(syn::Error::new_spanned(ty, "Vec type is empty")),
-                    }
-                } else {
-                    Ok(ident.clone())
-                }
-            }
-            _ => Err(syn::Error::new_spanned(ty, "type path is empty")),
+    let Type::Path(TypePath { path, .. }) = ty else {
+        return Err(syn::Error::new_spanned(ty, "unsupported type"))
+    };
+    let Some(PathSegment { ident, arguments }) = path.segments.first() else {
+        return Err(syn::Error::new_spanned(ty, "type path is empty"))
+    };
+    if ident.to_string() == "Vec" {
+        let PathArguments::AngleBracketed(AngleBracketedGenericArguments {
+            args,
+            ..
+        }) = arguments else {
+            return Err(syn::Error::new_spanned(ty, "Vec type is empty"))
+        };
+        let Some(syn::GenericArgument::Type(Type::Path(TypePath {
+            path,
+            ..
+        }))) = args.first() else {
+            return Err(syn::Error::new_spanned(ty, "Vec type arguments is empty"))
+        };
+        if let Some(PathSegment { ident, .. }) = path.segments.first() {
+            Ok(ident.clone())
+        } else {
+            Err(syn::Error::new_spanned(ty, "Vec type arguments type is empty"))
         }
     } else {
-        Err(syn::Error::new_spanned(ty, "unsupported type is empty"))
+        Ok(ident.clone())
     }
 }
