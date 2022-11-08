@@ -61,7 +61,7 @@ impl<T> MatObject for MatVar<T> {
 }
 impl<T: DataType> MatVar<T> {
     /// Creates a new Matlab variable `name`
-    pub fn new<S: Into<String>>(name: S, data: T) -> Result<Self> {
+    pub fn new<S: Into<String>>(name: S, data: &T) -> Result<Self> {
         let c_name = std::ffi::CString::new(name.into())?;
         let mut dims = [1, 1];
         let matvar_t = unsafe {
@@ -71,7 +71,7 @@ impl<T: DataType> MatVar<T> {
                 <T as DataType>::mat_t(),
                 2,
                 dims.as_mut_ptr(),
-                &data as *const _ as *mut std::ffi::c_void,
+                data as *const _ as *mut std::ffi::c_void,
                 0,
             )
         };
@@ -152,6 +152,11 @@ macro_rules! scalar {
         }
         impl<S:Into<String>+ Clone> From<(S,$rs)> for MatVar<$rs> {
             fn from((name,data): (S, $rs)) -> Self {
+                MatVar::<$rs>::new(name.clone(),&data).expect(&format!("failed to create Matlab variable {:}",name.into()))
+            }
+        }
+        impl<S:Into<String>+ Clone> From<(S,&$rs)> for MatVar<$rs> {
+            fn from((name,data): (S, &$rs)) -> Self {
                 MatVar::<$rs>::new(name.clone(),data).expect(&format!("failed to create Matlab variable {:}",name.into()))
             }
         }
@@ -180,9 +185,9 @@ impl<T: DataType> From<MatVar<Vec<T>>> for Vec<T> {
         }
     }
 }
-impl<S: Into<String> + Clone, T: DataType> From<(S, Vec<T>)> for MatVar<Vec<T>> {
-    fn from((name, data): (S, Vec<T>)) -> Self {
-        MatVar::<Vec<T>>::new(name.clone(), data.as_slice()).expect(&format!(
+impl<S: Into<String> + Clone, T: DataType> From<(S, &Vec<T>)> for MatVar<Vec<T>> {
+    fn from((name, data): (S, &Vec<T>)) -> Self {
+        MatVar::<Vec<T>>::new(name.clone(), data).expect(&format!(
             "failed to create Matlab variable {:}",
             name.into()
         ))

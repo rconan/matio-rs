@@ -134,23 +134,36 @@ impl Save for MatFile {
 }
 
 /// Matlab file high-level interface to [Save]
-pub trait Set<T> {
+pub trait Set<'a, T>
+where
+    T: 'a,
+{
     /// Sets a Rust variable into a [MatFile] with `name`
-    fn var<S>(&self, name: S, data: &T) -> &Self
+    fn var<S>(&'a self, name: S, data: &'a T) -> &'a Self
     where
-        (S, T): Into<MatVar<T>>,
+        (S, &'a T): Into<MatVar<T>>,
         S: Into<String>;
 }
-impl<T> Set<T> for MatFile
+impl<'a, T> Set<'a, T> for MatFile
 where
-    T: Clone,
+    T: 'a,
     MatFile: Save,
 {
-    fn var<S>(&self, name: S, data: &T) -> &Self
+    fn var<S>(&'a self, name: S, data: &'a T) -> &'a Self
     where
-        (S, T): Into<MatVar<T>>,
+        (S, &'a T): Into<MatVar<T>>,
         S: Into<String>,
     {
-        self.write((name, data.clone()).into())
+        self.write((name, data).into())
     }
+}
+pub trait SetStruct<'a, T>
+where
+    T: 'a,
+{
+    /// Sets a Rust struct into a [MatFile] with `name`
+    fn mat_struct<S>(&'a self, name: S, data: &'a T) -> &'a Self
+    where
+        &'a T: Into<MatStruct>,
+        S: Into<String>;
 }

@@ -12,6 +12,7 @@ categories = ["api-bindings", "mathematics", "science"]
 
 [dependencies]
 ffi = { version = "0.2.1", path = "sys", package = "matio-rs-sys" }
+matio-rs_derive = { version = "0.1.0", path = "derive" }
 nalgebra = { version = "0.31.0", optional = true }
 paste = "1.0.7"
 thiserror = "1.0.30"

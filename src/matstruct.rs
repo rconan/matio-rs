@@ -54,21 +54,21 @@ impl MatStruct {
         c_str.to_str().map(|s| s.into())
     }
 }
-impl Display for MatStruct {
+/* impl Display for MatStruct {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(
             f,
             r#"Matlab struct "{}" of dims:{:?}"#,
             self.name().map_err(|_| std::fmt::Error)?,
             self.dims()
-        )?;
-        writeln!(
+        )
+        /*         writeln!(
             f,
             " with fields: {:?}",
             self.fields_name().map_err(|_| std::fmt::Error)?
-        )
+        ) */
     }
-}
+} */
 impl MatStructBuilder {
     /// Build a Matlab structure
     pub fn build(self) -> Result<MatStruct> {
@@ -158,7 +158,7 @@ where
     T: 'static + DataType + Copy,
 {
     fn field<S: Into<String>>(mut self, name: S, data: &T) -> Result<Self> {
-        let fieldvar = MatVar::<T>::new(String::new(), *data)?;
+        let fieldvar = MatVar::<T>::new(String::new(), data)?;
         self.fields
             .get_or_insert_with(|| HashMap::new())
             .entry(name.into())
@@ -211,7 +211,7 @@ where
             .or_default()
             .extend(data.map(|data| {
                 Box::new(
-                    MatVar::<T>::new(String::new(), *data)
+                    MatVar::<T>::new(String::new(), data)
                         .expect(&format!("creating mat var {0} failed", name.clone().into())),
                 ) as Box<dyn MatObject>
             }));

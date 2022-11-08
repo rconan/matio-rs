@@ -141,7 +141,7 @@ use thiserror::Error;
 mod builder;
 pub use builder::Builder;
 mod matfile;
-pub use matfile::{Get, Load, MatFile, Read, Save, Set};
+pub use matfile::{Get, Load, MatFile, Read, Save, Set, SetStruct};
 mod matvar;
 pub use matvar::MatVar;
 mod matstruct;
@@ -275,7 +275,7 @@ mod tests {
         let mut b = (0..5).map(|x| (x as f64).cosh()).collect::<Vec<f64>>();
         {
             let mat_file = MatFile::save(root().join("data.rs.mat")).unwrap();
-            mat_file.write(MatVar::<f64>::new("a", 2f64.sqrt()).unwrap());
+            mat_file.write(MatVar::<f64>::new("a", &2f64.sqrt()).unwrap());
             mat_file.write(MatVar::<Vec<f64>>::new("b", &mut b).unwrap());
         }
         let mat_file = MatFile::load(root().join("data.rs.mat")).unwrap();
@@ -306,8 +306,7 @@ mod tests {
     #[test]
     fn test_save_polytype() {
         let mat_file = MatFile::save(root().join("data-poly.mat")).unwrap();
-        mat_file.write(MatVar::<i8>::new("a", 1i8).unwrap());
-        mat_file.write(MatVar::<f32>::new("b", 2f32).unwrap());
+        mat_file.write(MatVar::<i8>::new("a", &1i8).unwrap());
         mat_file.write(MatVar::<Vec<u16>>::new("c", &mut [3u16; 3]).unwrap());
     }
 

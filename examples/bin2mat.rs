@@ -1,3 +1,5 @@
+//! Convert CFD opds.bin files into opds.mat file
+
 use std::fs::File;
 
 use matio_rs::{Field, MatFile, MatStruct, Save};
