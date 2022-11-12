@@ -148,6 +148,7 @@ mod matstruct;
 pub use matstruct::{
     Field, FieldIterator, FieldMatObject, FieldMatObjectIterator, MatStruct, MatStructBuilder,
 };
+mod mat;
 
 #[derive(Error, Debug)]
 pub enum MatioError {
@@ -167,6 +168,10 @@ pub enum MatioError {
     NoFields,
     #[error("structure fields have different sizes {0:?}")]
     FieldSize(Vec<usize>),
+    #[error("expected Matlab type {0} found {1}")]
+    TryInto(String, String),
+    #[error("cannot convert a Matlab array of length {0} into a Rust scalar")]
+    Scalar(usize),
 }
 pub type Result<T> = std::result::Result<T, MatioError>;
 

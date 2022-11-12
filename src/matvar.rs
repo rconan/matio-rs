@@ -7,7 +7,7 @@ use std::{
 };
 
 mod datatype;
-pub use datatype::DataType;
+pub use datatype::{DataType, MatType};
 
 /// Matlab variable
 pub struct MatVar<T> {
