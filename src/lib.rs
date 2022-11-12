@@ -169,9 +169,13 @@ pub enum MatioError {
     #[error("structure fields have different sizes {0:?}")]
     FieldSize(Vec<usize>),
     #[error("expected Matlab type {0} found {1}")]
-    TryInto(String, String),
+    TypeMismatch(String, String),
     #[error("cannot convert a Matlab array of length {0} into a Rust scalar")]
     Scalar(usize),
+    #[error("Field name cannot be converted to &str")]
+    FieldName(#[from] std::str::Utf8Error),
+    #[error("Field {0} not found")]
+    FieldNotFound(String),
 }
 pub type Result<T> = std::result::Result<T, MatioError>;
 

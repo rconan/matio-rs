@@ -27,7 +27,7 @@ macro_rules! map {
 		)+
         paste! {
         impl MatType {
-            pub fn mat_type(ptr: *const ffi::matvar_t) -> Self {
+            pub fn from_ptr(ptr: *const ffi::matvar_t) -> Self {
                 let mat_ct = unsafe { ((*ptr).class_type, (*ptr).data_type) };
                 match mat_ct {
                     $(
