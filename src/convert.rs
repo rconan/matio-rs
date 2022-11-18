@@ -1,4 +1,4 @@
-use std::{ffi::CString, marker::PhantomData, ptr, rc::Rc};
+use std::{ffi::CString, marker::PhantomData, ptr};
 
 use crate::{DataType, Mat, MatioError, Result};
 

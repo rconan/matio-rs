@@ -144,11 +144,6 @@ mod matfile;
 pub use matfile::{MatFile, MatFileRead, MatFileWrite};
 mod datatype;
 use datatype::{DataType, MatType};
-// pub use matvar::MatVar;
-// mod matstruct;
-// pub use matstruct::{
-//     Field, FieldIterator, FieldMatObject, FieldMatObjectIterator, MatStruct, MatStructBuilder,
-// };
 mod mat;
 pub use mat::Mat;
 mod convert;
@@ -186,10 +181,7 @@ pub type Result<T> = std::result::Result<T, MatioError>;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{
-        path::{Path, PathBuf},
-        rc::Rc,
-    };
+    use std::path::{Path, PathBuf};
 
     pub fn root() -> PathBuf {
         Path::new("data").into()
@@ -369,92 +361,9 @@ mod tests {
         assert_eq!(b, vec![vec![0, 1, 2, 3, 4]; 5]);
     }
 }
-/*
-/// Interface to Matlab data
-pub trait MatObject {
-    fn as_mut_ptr(&mut self) -> *mut ffi::matvar_t;
-    fn as_ptr(&self) -> *const ffi::matvar_t;
-}
-pub(crate) trait MatObjectProperty {
-    fn rank(&self) -> usize;
-    fn dims(&self) -> Vec<u64>;
-    fn len(&self) -> usize;
-}
-impl<T: MatObject> MatObjectProperty for T {
-    fn rank(&self) -> usize {
-        unsafe { (*self.as_ptr()).rank as usize }
-    }
-    fn dims(&self) -> Vec<u64> {
-        unsafe {
-            let n = self.rank();
-            Vec::from_raw_parts((*self.as_ptr()).dims, n, n)
-        }
-    }
-    fn len(&self) -> usize {
-        self.dims().iter().fold(1, |p, d| p * d) as usize
-    }
-}
 
-#[cfg(test)]
+/* #[cfg(test)]
 mod tests {
-
-    #[test]
-    fn test_save_struct_array() {
-        use crate::FieldIterator;
-        let u = vec![1, 2, 3];
-        let v = vec![4, 5, 6];
-        let mat = MatStruct::new("a")
-            .field("fa", u.iter())
-            .unwrap()
-            .field("fb", v.iter())
-            .unwrap()
-            .build()
-            .unwrap();
-        let mat_file = MatFile::save(root().join("struct.mat")).unwrap();
-        mat_file.write(mat);
-    }
-
-    #[test]
-    fn test_struct_property() {
-        use crate::FieldIterator;
-        let u = vec![1, 2, 3];
-        let v = vec![4, 5, 6];
-        let mat = MatStruct::new("a")
-            .field("fa", u.iter())
-            .unwrap()
-            .field("fb", v.iter())
-            .unwrap()
-            .build()
-            .unwrap();
-        println!("{mat}");
-    }
-    #[test]
-    fn test_save_nested_struct() {
-        let mut builder = {
-            use crate::Field;
-            MatStruct::new("a")
-                .field("fa", &10f64)
-                .unwrap()
-                .field("fb", &vec![0i32, 1, 2, 3])
-                .unwrap()
-        };
-        let nested = {
-            use crate::Field;
-            MatStruct::new("a")
-                .field("fa", &10f64)
-                .unwrap()
-                .field("fb", &vec![0i32, 1, 2, 3])
-                .unwrap()
-                .build()
-                .unwrap()
-        };
-        builder = <MatStructBuilder as crate::FieldMatObject<MatStruct>>::field(
-            builder, "nested", nested,
-        )
-        .unwrap();
-        let mat_file = MatFile::save(root().join("struct_nested.mat")).unwrap();
-        mat_file.write(builder.build().unwrap());
-    }
 
     #[cfg(feature = "nalgebra")]
     #[test]
@@ -480,4 +389,4 @@ mod tests {
         println!("{b:?}");
     }
 }
- */
+  */

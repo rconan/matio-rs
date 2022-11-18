@@ -3,6 +3,7 @@ use crate::{
 };
 use std::{ffi::CStr, marker::PhantomData, ptr, slice::from_raw_parts};
 
+/// Matlab variable
 pub struct Mat<'a> {
     pub(crate) name: String,
     pub(crate) matvar_t: *mut ffi::matvar_t,
@@ -22,6 +23,7 @@ impl<'a> Drop for Mat<'a> {
     }
 }
 impl<'a> MatFile<'a> {
+    /// Read from a [MatFile] the Matlab [Mat] variable `name`
     pub fn read<S: Into<String>>(&self, name: S) -> Result<Mat<'a>> {
         let c_name = std::ffi::CString::new(name.into())?;
         let matvar_t = unsafe { ffi::Mat_VarRead(self.mat_t, c_name.as_ptr()) };
@@ -31,6 +33,7 @@ impl<'a> MatFile<'a> {
             Mat::from_ptr(c_name.to_str()?, matvar_t)
         }
     }
+    /// Write to a [MatFile] the Matlab [Mat] variable `name`
     pub fn write(&self, var: Mat<'a>) -> &Self {
         unsafe {
             ffi::Mat_VarWrite(
@@ -43,6 +46,7 @@ impl<'a> MatFile<'a> {
     }
 }
 impl<'a> MatFileRead<'a> {
+    /// Read from a [MatFileRead]er the Matlab [Mat] variable `name`
     pub fn var<S: Into<String>, T>(&self, name: S) -> Result<T>
     where
         Mat<'a>: MatTryInto<T>,
@@ -51,6 +55,7 @@ impl<'a> MatFileRead<'a> {
     }
 }
 impl<'a> MatFileWrite<'a> {
+    /// Write to a [MatFileWrite]r the Matlab [Mat] variable `name`
     pub fn var<S: Into<String>, T>(&self, name: S, data: T) -> Result<&Self>
     where
         Mat<'a>: MatTryFrom<'a, T>,
@@ -61,9 +66,11 @@ impl<'a> MatFileWrite<'a> {
     }
 }
 impl<'a> Mat<'a> {
+    /// Returns the rank (# of dimensions) of the Matlab variable
     pub fn rank(&self) -> usize {
         unsafe { (*self.matvar_t).rank as usize }
     }
+    /// Returns the dimensions of the Matlab variable
     pub fn dims(&self) -> Vec<u64> {
         let rank = self.rank();
         let mut dims: Vec<u64> = Vec::with_capacity(rank);
@@ -73,13 +80,14 @@ impl<'a> Mat<'a> {
         };
         dims
     }
+    /// Returns the number of elements of the Matlab variable
     pub fn len(&self) -> usize {
         self.dims().into_iter().product::<u64>() as usize
     }
-    pub fn mat_type(&self) -> MatType {
+    pub(crate) fn mat_type(&self) -> MatType {
         MatType::from_ptr(self.matvar_t)
     }
-    pub fn from_ptr<S: Into<String>>(name: S, ptr: *mut ffi::matvar_t) -> Result<Self> {
+    pub(crate) fn from_ptr<S: Into<String>>(name: S, ptr: *mut ffi::matvar_t) -> Result<Self> {
         if MatType::from_ptr(ptr) != MatType::STRUCT {
             return Ok(Mat {
                 name: name.into(),
@@ -119,6 +127,7 @@ impl<'a> Mat<'a> {
             marker: PhantomData,
         })
     }
+    /// Returns the field `name` from a Matlab structure
     pub fn field<S: Into<String>>(&'a self, name: S) -> Result<Vec<&'a Mat>> {
         let fields = if self.mat_type() == MatType::STRUCT {
             self.fields.as_ref().unwrap()
