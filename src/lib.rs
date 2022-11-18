@@ -147,7 +147,7 @@ use datatype::{DataType, MatType};
 mod mat;
 pub use mat::Mat;
 mod convert;
-pub use convert::{MatTryFrom, MatTryInto};
+pub use convert::{MayBeFrom, MayBeInto};
 
 #[derive(Error, Debug)]
 pub enum MatioError {

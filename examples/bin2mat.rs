@@ -2,7 +2,7 @@
 
 use std::fs::File;
 
-use matio_rs::{Mat, MatFile, MatTryFrom};
+use matio_rs::{Mat, MatFile, MayBeFrom};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Default)]

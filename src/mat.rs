@@ -1,5 +1,5 @@
 use crate::{
-    MatFile, MatFileRead, MatFileWrite, MatTryFrom, MatTryInto, MatType, MatioError, Result,
+    MatFile, MatFileRead, MatFileWrite, MatType, MatioError, MayBeFrom, MayBeInto, Result,
 };
 use std::{ffi::CStr, marker::PhantomData, ptr, slice::from_raw_parts};
 
@@ -49,7 +49,7 @@ impl<'a> MatFileRead<'a> {
     /// Read from a [MatFileRead]er the Matlab [Mat] variable `name`
     pub fn var<S: Into<String>, T>(&self, name: S) -> Result<T>
     where
-        Mat<'a>: MatTryInto<T>,
+        Mat<'a>: MayBeInto<T>,
     {
         self.read(name).and_then(|mat| mat.maybe_into())
     }
@@ -58,9 +58,9 @@ impl<'a> MatFileWrite<'a> {
     /// Write to a [MatFileWrite]r the Matlab [Mat] variable `name`
     pub fn var<S: Into<String>, T>(&self, name: S, data: T) -> Result<&Self>
     where
-        Mat<'a>: MatTryFrom<'a, T>,
+        Mat<'a>: MayBeFrom<'a, T>,
     {
-        let mat: Mat<'a> = MatTryFrom::<'a, T>::maybe_from(name, data)?;
+        let mat: Mat<'a> = MayBeFrom::<'a, T>::maybe_from(name, data)?;
         self.write(mat);
         Ok(self)
     }
