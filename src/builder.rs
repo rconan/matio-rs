@@ -1,4 +1,4 @@
-use crate::{MatFile, MatioError, Result};
+use crate::{matfile::Open, MatFile, MatioError, Result};
 use std::{
     fs, io,
     path::{Path, PathBuf},
@@ -39,17 +39,18 @@ impl Builder {
         }
     }
     /// Loads a mat file
-    pub fn load(self) -> Result<MatFile> {
+    pub fn load(self) -> Result<MatFile<'static, Open>> {
         let attrs = fs::metadata(&self.mat_name)?;
         if attrs.is_file() {
             let mat_name = std::ffi::CString::new(self.mat_name.to_str().unwrap())?;
-            let mat_t = unsafe { ffi::Mat_Open(mat_name.as_ptr(), self.access_mode as i32) };
+            let mat_t =
+                unsafe { ffi::Mat_Open(mat_name.as_ptr(), ffi::mat_acc_MAT_ACC_RDONLY as i32) };
             if mat_t.is_null() {
                 Err(MatioError::MatOpen(
                     self.mat_name.to_str().unwrap().to_string(),
                 ))
             } else {
-                Ok(MatFile { mat_t })
+                Ok(MatFile::from_ptr(mat_t))
             }
         } else {
             Err(MatioError::NoFile(io::Error::new(
@@ -58,7 +59,7 @@ impl Builder {
             )))
         }
     }
-    pub fn save(self) -> Result<MatFile> {
+    pub fn save(self) -> Result<MatFile<'static, Open>> {
         let mat_name = std::ffi::CString::new(self.mat_name.to_str().unwrap())?;
         let mat_t =
             unsafe { ffi::Mat_CreateVer(mat_name.as_ptr(), ptr::null(), ffi::mat_ft_MAT_FT_MAT5) };
@@ -67,7 +68,7 @@ impl Builder {
                 self.mat_name.to_str().unwrap().to_string(),
             ))
         } else {
-            Ok(MatFile { mat_t })
+            Ok(MatFile::from_ptr(mat_t))
         }
     }
 }

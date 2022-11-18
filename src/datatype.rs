@@ -5,6 +5,7 @@ pub trait DataType {
     fn mat_c() -> ffi::matio_classes;
     fn mat_t() -> ffi::matio_types;
     fn mat_type() -> MatType;
+    fn to_string() -> String;
 }
 
 macro_rules! map {
@@ -21,6 +22,9 @@ macro_rules! map {
             fn mat_type() -> MatType {
                 MatType::$mat
             }
+            fn to_string() -> String {
+                stringify!($rs).to_string()
+            }
             }
 
         }
@@ -34,6 +38,13 @@ macro_rules! map {
                     (ffi::[<matio_classes_MAT_C_ $mat>], ffi::[<matio_types_MAT_T_ $mat>]) => MatType::$mat,
                     )+
                     _ => unimplemented!()
+                }
+            }
+            pub fn to_string(&self) -> String {
+                match self {
+                    $(
+                        MatType::$mat => stringify!($mat).to_string(),
+                    )+
                 }
             }
         }
@@ -52,7 +63,7 @@ map! {
 (u16, UINT16),
 (u32, UINT32),
 (u64, UINT64),
-(crate::MatStruct, STRUCT)
+((), STRUCT)
 }
 
 #[derive(Debug, PartialEq, Eq)]
