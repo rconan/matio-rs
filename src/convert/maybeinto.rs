@@ -2,6 +2,7 @@ use std::ptr;
 
 use crate::{DataType, Mat, MatioError, Result};
 
+/// Convert a [Mat] variable into a Rust data type
 pub trait MayBeInto<T> {
     fn maybe_into(self) -> Result<T>;
 }

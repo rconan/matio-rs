@@ -2,6 +2,7 @@ use std::{ffi::CString, marker::PhantomData, ptr};
 
 use crate::{DataType, Mat, MatioError, Result};
 
+/// Convert a Rust data type into a [Mat] variable
 pub trait MayBeFrom<'a, T> {
     fn maybe_from<S: Into<String>>(name: S, data: T) -> Result<Self>
     where
