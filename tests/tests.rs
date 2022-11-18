@@ -1,49 +1,62 @@
 use matio_rs::*;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
+use tempfile::NamedTempFile;
 
 pub fn root() -> PathBuf {
-    Path::new("data").into()
+    //Path::new("data").into()
+    let file = NamedTempFile::new().unwrap();
+    file.path().to_path_buf()
 }
 
 #[test]
-fn test_read_scalar() {
-    let mat_file = MatFile::load(root().join("data.mat")).unwrap();
+fn test_read_write_scalar() {
+    let path = root();
+    let mat_file = MatFile::save(&path).unwrap();
+    mat_file.var("a", std::f64::consts::PI).unwrap();
+    let mat_file = MatFile::load(&path).unwrap();
     let a: f64 = mat_file.var("a").unwrap();
     assert_eq!(a, std::f64::consts::PI);
 }
 
 #[test]
 fn test_read_1d() {
-    let mat_file = MatFile::load(root().join("data.mat")).unwrap();
+    let path = root();
+    let mat_file = MatFile::save(&path).unwrap();
+    mat_file.var("b", vec![3f64, 1., 4., 1., 6.]).unwrap();
+    let mat_file = MatFile::load(&path).unwrap();
     let b: Vec<f64> = mat_file.var("b").unwrap();
     assert_eq!(b, vec![3f64, 1., 4., 1., 6.])
 }
 
 #[test]
 fn test_get_2d() {
-    let mat_file = MatFile::load(root().join("data.mat")).unwrap();
+    let path = root();
+    let mat_file = MatFile::save(&path).unwrap();
+    mat_file.var("c", vec![4f64, 3., 2., 7.]).unwrap();
+    let mat_file = MatFile::load(&path).unwrap();
     let c: Vec<f64> = mat_file.var("c").unwrap();
     assert_eq!(c, vec![4f64, 3., 2., 7.])
 }
 
 #[test]
 fn test_readwrite() {
+    let path = root();
     let b = (0..5).map(|x| (x as f64).cosh()).collect::<Vec<f64>>();
-    MatFile::save(root().join("data.rs.mat"))
+    MatFile::save(&path)
         .unwrap()
         .var("a", 2f64.sqrt())
         .unwrap()
         .var("b", &b)
         .unwrap();
-    let mat_file = MatFile::load(root().join("data.rs.mat")).unwrap();
+    let mat_file = MatFile::load(&path).unwrap();
     let a: f64 = mat_file.var("a").unwrap();
     assert_eq!(a, 2f64.sqrt());
     let bb: Vec<f64> = mat_file.var("b").unwrap();
     assert_eq!(b, bb);
 }
 
-fn polytype() {
-    MatFile::save(root().join("data-poly.mat"))
+fn polytype(path: &PathBuf) {
+    MatFile::save(path)
         .unwrap()
         .var("a", 1i8)
         .unwrap()
@@ -55,8 +68,9 @@ fn polytype() {
 
 #[test]
 fn test_polytype() {
-    polytype();
-    let mat_file = MatFile::load(root().join("data-poly.mat")).unwrap();
+    let path = root();
+    polytype(&path);
+    let mat_file = MatFile::load(&path).unwrap();
     let a: i8 = mat_file.var("a").unwrap();
     assert_eq!(a, 1i8);
     let b: f32 = mat_file.var("b").unwrap();
@@ -65,7 +79,7 @@ fn test_polytype() {
     assert_eq!(c, vec![3u16; 3]);
 }
 
-fn save_struct() {
+fn save_struct(path: &PathBuf) {
     let mat_a = Mat::maybe_from("fa", 123f64).unwrap();
     let v = vec![0i32, 1, 2, 3, 4];
     let mat_v = Mat::maybe_from("fb", &v).unwrap();
@@ -73,14 +87,15 @@ fn save_struct() {
     let data = vec![mat_a, mat_v];
     let mat_struct = Mat::maybe_from("s", data).unwrap();
 
-    let mat_file = MatFile::save(root().join("struct.mat")).unwrap();
+    let mat_file = MatFile::save(path).unwrap();
     mat_file.write(mat_struct);
 }
 
 #[test]
 fn test_struct() {
-    save_struct();
-    let mat_file = MatFile::load(root().join("struct.mat")).unwrap();
+    let path = root();
+    save_struct(&path);
+    let mat_file = MatFile::load(&path).unwrap();
     let mat: Mat = mat_file.var("s").unwrap();
     let a: f64 = mat
         .field("fa")
@@ -100,7 +115,7 @@ fn test_struct() {
     assert_eq!(b, vec![0i32, 1, 2, 3, 4,]);
 }
 
-fn save_struct_nested() {
+fn save_struct_nested(path: &PathBuf) {
     let mat_a = Mat::maybe_from("fa", 123f64).unwrap();
     let v = vec![0i32, 1, 2, 3, 4];
     let mat_v = Mat::maybe_from("fb", &v).unwrap();
@@ -115,13 +130,14 @@ fn save_struct_nested() {
     let data = vec![mat_a, mat_v, nested];
     let mat_struct = Mat::maybe_from("s", data).unwrap();
 
-    let mat_file = MatFile::save(root().join("struct-nested.mat")).unwrap();
+    let mat_file = MatFile::save(path).unwrap();
     mat_file.write(mat_struct);
 }
 #[test]
 fn test_struct_nested() {
-    save_struct_nested();
-    let mat_file = MatFile::load(root().join("struct-nested.mat")).unwrap();
+    let path = root();
+    save_struct_nested(&path);
+    let mat_file = MatFile::load(&path).unwrap();
     let mat: Mat = mat_file.var("s").unwrap();
     let a: f64 = mat
         .field("fa")
@@ -147,7 +163,7 @@ fn test_struct_nested() {
     assert_eq!(b, vec![0i32, 1, 2, 3, 4]);
 }
 
-fn save_struct_array() {
+fn save_struct_array(path: &PathBuf) {
     let n = 5;
     let mat_a = Box::new((1..=n).map(|i| Mat::maybe_from("fa", i).unwrap()))
         as Box<dyn Iterator<Item = Mat>>;
@@ -156,14 +172,15 @@ fn save_struct_array() {
     let data = vec![mat_a, mat_v];
     let mat_struct = Mat::maybe_from("s", data).unwrap();
 
-    let mat_file = MatFile::save(root().join("struct-array.mat")).unwrap();
+    let mat_file = MatFile::save(path).unwrap();
     mat_file.write(mat_struct);
 }
 
 #[test]
 fn test_struct_array() {
-    save_struct_array();
-    let mat_file = MatFile::load(root().join("struct-array.mat")).unwrap();
+    let path = root();
+    save_struct_array(&path);
+    let mat_file = MatFile::load(&path).unwrap();
     let mat: Mat = mat_file.var("s").unwrap();
     let mat_a = mat.field("fa").unwrap();
     let a = mat_a
