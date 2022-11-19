@@ -6,7 +6,7 @@ pub struct MatFile<'a> {
     pub(crate) mat_t: *mut ffi::mat_t,
     marker: PhantomData<&'a ffi::mat_t>,
 }
-/// Mat file [Mat](crate::Mat) reader
+/// [Mat file](crate::MatFile) reader
 pub struct MatFileRead<'a>(MatFile<'a>);
 impl<'a> Deref for MatFileRead<'a> {
     type Target = MatFile<'a>;
@@ -14,7 +14,7 @@ impl<'a> Deref for MatFileRead<'a> {
         &self.0
     }
 }
-/// Mat file [Mat](crate::Mat) writer
+/// [Mat file](crate::MatFile) writer
 pub struct MatFileWrite<'a>(MatFile<'a>);
 impl<'a> Deref for MatFileWrite<'a> {
     type Target = MatFile<'a>;
@@ -30,6 +30,14 @@ impl<'a> MatFile<'a> {
         }
     }
     /// Loads [Mat](crate::Mat) variables from a mat file
+    ///
+    /// ```
+    /// use matio_rs::MatFile;
+    /// # let file = tempfile::NamedTempFile::new().unwrap();
+    /// # let data_path = file.path();
+    /// let mat_file = MatFile::load(data_path)?;
+    /// # Ok::<(), matio_rs::MatioError>(())
+    /// ```
     pub fn load<P: AsRef<Path>>(path: P) -> Result<MatFileRead<'a>> {
         let attrs = fs::metadata(&path)?;
         if attrs.is_file() {
@@ -51,6 +59,14 @@ impl<'a> MatFile<'a> {
         }
     }
     /// Saves [Mat](crate::Mat) variables to a mat file
+    ///
+    /// ```
+    /// use matio_rs::MatFile;
+    /// # let file = tempfile::NamedTempFile::new().unwrap();
+    /// # let data_path = file.path();
+    /// let mat_file = MatFile::save(data_path)?;
+    /// # Ok::<(), matio_rs::MatioError>(())
+    /// ```
     pub fn save<P: AsRef<Path>>(path: P) -> Result<MatFileWrite<'a>> {
         let mat_name = std::ffi::CString::new(path.as_ref().to_str().unwrap())?;
         let mat_t =

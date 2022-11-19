@@ -47,6 +47,28 @@ impl<'a> MatFile<'a> {
 }
 impl<'a> MatFileRead<'a> {
     /// Read from a [MatFileRead]er the Matlab [Mat] variable `name`
+    ///
+    /// Reading a scalar Matlab variable: a = π
+    /// ```
+    /// use matio_rs::MatFile;
+    /// # let file = tempfile::NamedTempFile::new().unwrap();
+    /// # let data_path = file.path();
+    /// # let mat_file = MatFile::save(&data_path)?.var("a", std::f64::consts::PI)?;
+    /// let a: f64 = MatFile::load(data_path)?.var("a")?;
+    /// println!("{a:?}");
+    /// # Ok::<(), matio_rs::MatioError>(())
+    /// ```
+    ///
+    /// Reading a Matlab vector: b = [3.0, 1.0, 4.0, 1.0, 6.0]
+    /// ```
+    /// use matio_rs::MatFile;
+    /// # let file = tempfile::NamedTempFile::new().unwrap();
+    /// # let data_path = file.path();
+    /// # let mat_file = MatFile::save(&data_path)?.var("b", vec![3.0, 1.0, 4.0, 1.0, 6.0])?;
+    /// let b: Vec<f64> = MatFile::load(data_path)?.var("b")?;
+    /// println!("{b:?}");
+    /// # Ok::<(), matio_rs::MatioError>(())
+    /// ```
     pub fn var<S: Into<String>, T>(&self, name: S) -> Result<T>
     where
         Mat<'a>: MayBeInto<T>,
@@ -56,6 +78,18 @@ impl<'a> MatFileRead<'a> {
 }
 impl<'a> MatFileWrite<'a> {
     /// Write to a [MatFileWrite]r the Matlab [Mat] variable `name`
+    ///
+    /// Saving to a mat file
+    /// ```
+    /// use matio_rs::MatFile;
+    /// # let file = tempfile::NamedTempFile::new().unwrap();
+    /// # let data_path = file.path();
+    /// let mut b = (0..5).map(|x| (x as f64).cosh()).collect::<Vec<f64>>();
+    /// MatFile::save(data_path)?
+    /// .var("a", 2f64.sqrt())?
+    /// .var("b", &b)?;
+    /// # Ok::<(), matio_rs::MatioError>(())
+    /// ```
     pub fn var<S: Into<String>, T>(&self, name: S, data: T) -> Result<&Self>
     where
         Mat<'a>: MayBeFrom<'a, T>,
