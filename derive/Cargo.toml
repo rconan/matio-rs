@@ -2,6 +2,13 @@
 name = "matio-rs_derive"
 version = "0.1.0"
 edition = "2021"
+authors = ["Rod Conan <rconan@gmto.org>"]
+license = "MIT"
+description = "Rust wrapper to MATLAB MAT file I/O library"
+repository = "https://github.com/rconan/matio-rs"
+documentation = "https://docs.rs/matio-rs"
+readme = "README.md"
+categories = ["api-bindings", "mathematics", "science"]
 
 [lib]
 proc-macro = true
