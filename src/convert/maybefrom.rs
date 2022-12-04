@@ -3,12 +3,12 @@ use std::{ffi::CString, marker::PhantomData, ptr};
 use crate::{DataType, Mat, MatioError, Result};
 
 /// Convert a Rust data type into a [Mat] variable
-pub trait MayBeFrom<'a, T> {
+pub trait MayBeFrom<T> {
     fn maybe_from<S: Into<String>>(name: S, data: T) -> Result<Self>
     where
         Self: Sized;
 }
-impl<'a, T: DataType + Copy> MayBeFrom<'a, T> for Mat<'a> {
+impl<'a, T: DataType> MayBeFrom<T> for Mat<'a> {
     fn maybe_from<S: Into<String>>(name: S, data: T) -> Result<Self> {
         let c_name = CString::new(name.into())?;
         let mut dims = [1, 1];
@@ -32,17 +32,17 @@ impl<'a, T: DataType + Copy> MayBeFrom<'a, T> for Mat<'a> {
         }
     }
 }
-impl<'a, T: DataType> MayBeFrom<'a, &Vec<T>> for Mat<'a> {
+impl<'a, T: DataType> MayBeFrom<&Vec<T>> for Mat<'a> {
     fn maybe_from<S: Into<String>>(name: S, data: &Vec<T>) -> Result<Self> {
-        <Mat<'a> as MayBeFrom<'a, &[T]>>::maybe_from(name, data.as_slice())
+        <Mat<'a> as MayBeFrom<&[T]>>::maybe_from(name, data.as_slice())
     }
 }
-impl<'a, T: DataType> MayBeFrom<'a, Vec<T>> for Mat<'a> {
+impl<'a, T: DataType> MayBeFrom<Vec<T>> for Mat<'a> {
     fn maybe_from<S: Into<String>>(name: S, data: Vec<T>) -> Result<Self> {
-        <Mat<'a> as MayBeFrom<'a, &[T]>>::maybe_from(name, data.as_slice())
+        <Mat<'a> as MayBeFrom<&[T]>>::maybe_from(name, data.as_slice())
     }
 }
-impl<'a, T: DataType> MayBeFrom<'a, &[T]> for Mat<'a> {
+impl<'a, T: DataType> MayBeFrom<&[T]> for Mat<'a> {
     fn maybe_from<S: Into<String>>(name: S, data: &[T]) -> Result<Self> {
         let c_name = CString::new(name.into())?;
         let mut dims = [1, data.len() as u64];
@@ -66,14 +66,14 @@ impl<'a, T: DataType> MayBeFrom<'a, &[T]> for Mat<'a> {
         }
     }
 }
-impl<'a> MayBeFrom<'a, Vec<Mat<'a>>> for Mat<'a> {
+impl<'a> MayBeFrom<Vec<Mat<'a>>> for Mat<'a> {
     fn maybe_from<S: Into<String>>(name: S, fields: Vec<Mat<'a>>) -> Result<Self> {
         let fields: VecArray = fields.into_iter().map(|mat| vec![mat]).collect();
-        <Mat<'a> as MayBeFrom<'a, Vec<Vec<Mat<'a>>>>>::maybe_from(name, fields)
+        <Mat<'a> as MayBeFrom<Vec<Vec<Mat<'a>>>>>::maybe_from(name, fields)
     }
 }
 type VecArray<'a> = Vec<Vec<Mat<'a>>>;
-impl<'a> MayBeFrom<'a, VecArray<'a>> for Mat<'a> {
+impl<'a> MayBeFrom<VecArray<'a>> for Mat<'a> {
     fn maybe_from<S: Into<String>>(name: S, fields: VecArray<'a>) -> Result<Self> {
         let c_name = CString::new(name.into())?;
         let mut dims = [1u64, fields[0].len() as u64];
@@ -108,12 +108,12 @@ impl<'a> MayBeFrom<'a, VecArray<'a>> for Mat<'a> {
 }
 
 type MatIterator<'a> = Vec<Box<dyn Iterator<Item = Mat<'a>>>>;
-impl<'a> MayBeFrom<'a, MatIterator<'a>> for Mat<'a> {
+impl<'a> MayBeFrom<MatIterator<'a>> for Mat<'a> {
     fn maybe_from<S: Into<String>>(name: S, field_iter: MatIterator<'a>) -> Result<Self> {
         let fields: Vec<Vec<Mat<'a>>> = field_iter
             .into_iter()
             .map(|f| f.collect::<Vec<_>>())
             .collect();
-        <Mat<'a> as MayBeFrom<'a, Vec<Vec<Mat<'a>>>>>::maybe_from(name, fields)
+        <Mat<'a> as MayBeFrom<Vec<Vec<Mat<'a>>>>>::maybe_from(name, fields)
     }
 }

@@ -11,7 +11,7 @@ pub struct Opds {
     pub mask: Vec<bool>,
 }
 
-impl<'a> MayBeFrom<'a, &'a Opds> for Mat<'a> {
+impl<'a> MayBeFrom<&'a Opds> for Mat<'a> {
     fn maybe_from<S: Into<String>>(name: S, data: &'a Opds) -> matio_rs::Result<Self> {
         let m: Vec<u8> = data
             .mask

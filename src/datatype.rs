@@ -26,9 +26,55 @@ macro_rules! map {
                 stringify!($rs).to_string()
             }
             }
-
+            impl DataType for &$rs {
+            fn mat_c() -> ffi::matio_classes {
+                        ffi::[<matio_classes_MAT_C_ $mat>]
+            }
+            fn mat_t() -> ffi::matio_types {
+                        ffi::[<matio_types_MAT_T_ $mat>]
+            }
+            fn mat_type() -> MatType {
+                MatType::$mat
+            }
+            fn to_string() -> String {
+                stringify!($rs).to_string()
+            }
+            }
         }
 		)+
+    };
+}
+
+map! {
+(f64, DOUBLE),
+(f32, SINGLE),
+( i8, INT8),
+(i16, INT16),
+(i32, INT32),
+(i64, INT64),
+( u8, UINT8),
+(u16, UINT16),
+(u32, UINT32),
+(u64, UINT64)
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum MatType {
+    DOUBLE,
+    SINGLE,
+    INT8,
+    INT16,
+    INT32,
+    INT64,
+    UINT8,
+    UINT16,
+    UINT32,
+    UINT64,
+    STRUCT,
+}
+
+macro_rules! impl_mat_type {
+    ( $( $mat:expr ),+ ) => {
         paste! {
         impl MatType {
             pub fn from_ptr(ptr: *const ffi::matvar_t) -> Self {
@@ -52,31 +98,16 @@ macro_rules! map {
     };
 }
 
-map! {
-(f64, DOUBLE),
-(f32, SINGLE),
-( i8, INT8),
-(i16, INT16),
-(i32, INT32),
-(i64, INT64),
-( u8, UINT8),
-(u16, UINT16),
-(u32, UINT32),
-(u64, UINT64),
-((), STRUCT)
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum MatType {
-    DOUBLE,
-    SINGLE,
-    INT8,
-    INT16,
-    INT32,
-    INT64,
-    UINT8,
-    UINT16,
-    UINT32,
-    UINT64,
-    STRUCT,
+impl_mat_type! {
+ DOUBLE,
+ SINGLE,
+ INT8,
+ INT16,
+ INT32,
+ INT64,
+ UINT8,
+ UINT16,
+ UINT32,
+ UINT64,
+ STRUCT
 }

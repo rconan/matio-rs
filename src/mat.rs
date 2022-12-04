@@ -92,9 +92,9 @@ impl<'a> MatFileWrite<'a> {
     /// ```
     pub fn var<S: Into<String>, T>(&self, name: S, data: T) -> Result<&Self>
     where
-        Mat<'a>: MayBeFrom<'a, T>,
+        Mat<'a>: MayBeFrom<T>,
     {
-        let mat: Mat<'a> = MayBeFrom::<'a, T>::maybe_from(name, data)?;
+        let mat: Mat<'a> = MayBeFrom::<T>::maybe_from(name, data)?;
         self.write(mat);
         Ok(self)
     }

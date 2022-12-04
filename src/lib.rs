@@ -71,7 +71,42 @@ and then loading the structure fields back into Rust variables
         .get(0).unwrap()
         .maybe_into()?;
     # Ok::<(), matio_rs::MatioError>(())
-```*/
+```
+
+Rust structure with the [MatIO] derive attribute can be dispatched like any other variables:
+```
+use matio_rs::{MatFile, MatIO};
+# use tempfile::NamedTempFile;
+
+#[derive(Debug, Default, MatIO)]
+struct SMat {
+    a: f64,
+    b: Vec<u32>,
+    s: Nested,
+}
+#[derive(Debug, Default, MatIO)]
+struct Nested {
+    a: f64,
+    b: Vec<u32>,
+}
+
+    let n = Nested {
+        a: 1f64,
+        b: vec![2, 3, 4, 5],
+    };
+    let a = SMat {
+        a: 1f64,
+        b: vec![2, 3, 4, 5],
+        s: n,
+    };
+
+    # let file = NamedTempFile::new().unwrap();
+    MatFile::save(&file)?.var("a", &a)?;
+    let aa: SMat = MatFile::load(file)?.var("a")?;
+
+    # Ok::<(), matio_rs::MatioError>(())
+```
+*/
 
 use std::io;
 use thiserror::Error;
@@ -81,11 +116,12 @@ use thiserror::Error;
 mod matfile;
 pub use matfile::{MatFile, MatFileRead, MatFileWrite};
 mod datatype;
-use datatype::{DataType, MatType};
+pub use datatype::{DataType, MatType};
 mod mat;
 pub use mat::Mat;
 mod convert;
 pub use convert::{MayBeFrom, MayBeInto};
+pub use derive::MatIO;
 
 #[derive(Error, Debug)]
 pub enum MatioError {

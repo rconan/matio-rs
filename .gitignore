@@ -2,5 +2,5 @@
 Cargo.lock
 *~
 struct*.mat
-data/opds.*
+data/*
 
