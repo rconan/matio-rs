@@ -1,4 +1,4 @@
-use std::{ffi::CString, marker::PhantomData, ptr};
+use std::{ffi::CString, marker::PhantomData, ptr, vec};
 
 use crate::{DataType, Mat, MatioError, Result};
 
@@ -115,5 +115,82 @@ impl<'a> MayBeFrom<MatIterator<'a>> for Mat<'a> {
             .map(|f| f.collect::<Vec<_>>())
             .collect();
         <Mat<'a> as MayBeFrom<Vec<Vec<Mat<'a>>>>>::maybe_from(name, fields)
+    }
+}
+
+#[cfg(feature = "nalgebra")]
+impl<'a, T: DataType> MayBeFrom<nalgebra::DVector<T>> for Mat<'a> {
+    fn maybe_from<S: Into<String>>(name: S, vector: nalgebra::DVector<T>) -> Result<Self>
+    where
+        Self: Sized,
+    {
+        <Mat<'a> as MayBeFrom<&nalgebra::DVector<T>>>::maybe_from(name, &vector)
+    }
+}
+#[cfg(feature = "nalgebra")]
+impl<'a, T: DataType> MayBeFrom<&nalgebra::DVector<T>> for Mat<'a> {
+    fn maybe_from<S: Into<String>>(name: S, vector: &nalgebra::DVector<T>) -> Result<Self>
+    where
+        Self: Sized,
+    {
+        let mut dims: [u64; 2] = [vector.len() as u64, 1u64];
+        let data = vector.as_slice();
+        let c_name = CString::new(name.into())?;
+        let matvar_t = unsafe {
+            ffi::Mat_VarCreate(
+                c_name.as_ptr(),
+                <T as DataType>::mat_c(),
+                <T as DataType>::mat_t(),
+                2,
+                dims.as_mut_ptr(),
+                data.as_ptr() as *mut std::ffi::c_void,
+                0,
+            )
+        };
+        if matvar_t.is_null() {
+            Err(MatioError::MatVarCreate(
+                c_name.to_str().unwrap().to_string(),
+            ))
+        } else {
+            Mat::from_ptr(c_name.to_str().unwrap(), matvar_t)
+        }
+    }
+}
+#[cfg(feature = "nalgebra")]
+impl<'a, T: DataType> MayBeFrom<nalgebra::DMatrix<T>> for Mat<'a> {
+    fn maybe_from<S: Into<String>>(name: S, matrix: nalgebra::DMatrix<T>) -> Result<Self>
+    where
+        Self: Sized,
+    {
+        <Mat<'a> as MayBeFrom<&nalgebra::DMatrix<T>>>::maybe_from(name, &matrix)
+    }
+}
+#[cfg(feature = "nalgebra")]
+impl<'a, T: DataType> MayBeFrom<&nalgebra::DMatrix<T>> for Mat<'a> {
+    fn maybe_from<S: Into<String>>(name: S, matrix: &nalgebra::DMatrix<T>) -> Result<Self>
+    where
+        Self: Sized,
+    {
+        let mut dims: [u64; 2] = [matrix.nrows() as u64, matrix.ncols() as u64];
+        let data = matrix.as_slice();
+        let c_name = CString::new(name.into())?;
+        let matvar_t = unsafe {
+            ffi::Mat_VarCreate(
+                c_name.as_ptr(),
+                <T as DataType>::mat_c(),
+                <T as DataType>::mat_t(),
+                2,
+                dims.as_mut_ptr(),
+                data.as_ptr() as *mut std::ffi::c_void,
+                0,
+            )
+        };
+        if matvar_t.is_null() {
+            Err(MatioError::MatVarCreate(
+                c_name.to_str().unwrap().to_string(),
+            ))
+        } else {
+            Mat::from_ptr(c_name.to_str().unwrap(), matvar_t)
+        }
     }
 }

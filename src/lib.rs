@@ -116,7 +116,7 @@ use thiserror::Error;
 mod matfile;
 pub use matfile::{MatFile, MatFileRead, MatFileWrite};
 mod datatype;
-pub use datatype::{DataType, MatType};
+pub(crate) use datatype::{DataType, MatType};
 mod mat;
 pub use mat::Mat;
 mod convert;
@@ -149,5 +149,7 @@ pub enum MatioError {
     FieldName(#[from] std::str::Utf8Error),
     #[error("Field {0} not found")]
     FieldNotFound(String),
+    #[error("expected rank 2, found {0}")]
+    Rank(usize),
 }
 pub type Result<T> = std::result::Result<T, MatioError>;

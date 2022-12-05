@@ -196,31 +196,23 @@ fn test_struct_array() {
     assert_eq!(b, vec![vec![0, 1, 2, 3, 4]; 5]);
 }
 
-/* #[cfg(test)]
-mod tests {
-
-    #[cfg(feature = "nalgebra")]
-    #[test]
-    fn test_vector() {
-        let mat_file = MatFile::load(root().join("arrays.mat")).unwrap();
-        let mat: MatVar<Vec<f64>> = mat_file.read("a").unwrap();
-        let a: nalgebra::DVector<f64> = mat.into();
-        println!("{a}");
-        let mat: MatVar<Vec<f64>> = mat_file.read("b").unwrap();
-        let b: nalgebra::DVector<f64> = mat.into();
-        println!("{b}");
-    }
-
-    #[cfg(feature = "nalgebra")]
-    #[test]
-    fn test_matrix() {
-        let mat_file = MatFile::load(root().join("arrays.mat")).unwrap();
-        let mat: MatVar<Vec<f64>> = mat_file.read("a").unwrap();
-        let a: Option<nalgebra::DMatrix<f64>> = mat.into();
-        println!("{:}", a.unwrap());
-        let mat: MatVar<Vec<f64>> = mat_file.read("b").unwrap();
-        let b: Option<nalgebra::DMatrix<f64>> = mat.into();
-        println!("{b:?}");
-    }
+#[cfg(feature = "nalgebra")]
+#[test]
+fn test_nalgebra_vector() {
+    let na_v = nalgebra::DVector::from_iterator(5, 0..5);
+    let path = root();
+    MatFile::save(&path).unwrap().var("na_v", &na_v).unwrap();
+    let v: nalgebra::DMatrix<i32> = MatFile::load(path).unwrap().var("na_v").unwrap();
+    assert_eq!(na_v, v);
 }
-  */
+
+#[cfg(feature = "nalgebra")]
+#[test]
+fn test_nalgebra_matrix() {
+    let na_m = nalgebra::DMatrix::from_iterator(3, 2, 0..6);
+    let path = root();
+    MatFile::save(&path).unwrap().var("na_m", &na_m).unwrap();
+    let m: nalgebra::DMatrix<i32> = MatFile::load(path).unwrap().var("na_m").unwrap();
+    assert_eq!(na_m, m);
+}
+

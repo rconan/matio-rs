@@ -1,6 +1,5 @@
-use std::ptr;
-
 use crate::{DataType, Mat, MatioError, Result};
+use std::ptr;
 
 /// Convert a [Mat] variable into a Rust data type
 pub trait MayBeInto<T> {
@@ -54,5 +53,39 @@ impl<'a, T: DataType> MayBeInto<Vec<T>> for Mat<'a> {
 impl<'a> MayBeInto<Mat<'a>> for Mat<'a> {
     fn maybe_into(self) -> Result<Mat<'a>> {
         Ok(self)
+    }
+}
+
+#[cfg(feature = "nalgebra")]
+impl<'a, T: DataType + Clone + std::cmp::PartialEq + std::fmt::Debug + 'static>
+    MayBeInto<nalgebra::DMatrix<T>> for Mat<'a>
+{
+    fn maybe_into(self) -> Result<nalgebra::DMatrix<T>> {
+        <&Mat<'a> as MayBeInto<nalgebra::DMatrix<T>>>::maybe_into(&self)
+    }
+}
+#[cfg(feature = "nalgebra")]
+impl<'a, T: DataType + Clone + std::cmp::PartialEq + std::fmt::Debug + 'static>
+    MayBeInto<nalgebra::DMatrix<T>> for &Mat<'a>
+{
+    fn maybe_into(self) -> Result<nalgebra::DMatrix<T>> {
+        if T::mat_type() != self.mat_type() {
+            return Err(MatioError::TypeMismatch(
+                self.name.clone(),
+                T::to_string(),
+                self.mat_type().to_string(),
+            ));
+        }
+        if self.rank() > 2 {
+            return Err(MatioError::Rank(self.rank()));
+        }
+        let dims = self.dims();
+        let (nrows, ncols) = (dims[0] as usize, dims[1] as usize);
+        let data: Vec<T> = self.maybe_into()?;
+        Ok(nalgebra::DMatrix::from_column_slice(
+            nrows,
+            ncols,
+            data.as_slice(),
+        ))
     }
 }
