@@ -8,69 +8,69 @@ MATLAB MAT file I/O C library
 
 Saving to a Mat file
 ```
-    use matio_rs::MatFile;
-    # let file = tempfile::NamedTempFile::new().unwrap();
-    # let data_path = file.path();
-    MatFile::save(data_path)?
-        .var("a", 1i8)?
-        .var("b", 2f32)?
-        .var("c", &vec![3u16; 3])?;
-    # Ok::<(), matio_rs::MatioError>(())
+use matio_rs::MatFile;
+# let file = tempfile::NamedTempFile::new().unwrap();
+# let data_path = file.path();
+MatFile::save(data_path)?
+    .var("a", 1i8)?
+    .var("b", 2f32)?
+    .var("c", &vec![3u16; 3])?;
+# Ok::<(), matio_rs::MatioError>(())
 ```
 and then loading the data back into Rust
 ```
-    # use matio_rs::MatFile;
-    # let file = tempfile::NamedTempFile::new().unwrap();
-    # let data_path = file.path();
-    # MatFile::save(data_path)?
-    #   .var("a", 1i8)?
-    #    .var("b", 2f32)?
-    #    .var("c", &vec![3u16; 3])?;
-    let mat_file = MatFile::load(data_path)?;
-    let a: i8 = mat_file.var("a")?;
-    let b: f32 = mat_file.var("b")?;
-    let c: Vec<u16> = mat_file.var("c")?;
-    # Ok::<(), matio_rs::MatioError>(())
+# use matio_rs::MatFile;
+# let file = tempfile::NamedTempFile::new().unwrap();
+# let data_path = file.path();
+# MatFile::save(data_path)?
+#   .var("a", 1i8)?
+#    .var("b", 2f32)?
+#    .var("c", &vec![3u16; 3])?;
+let mat_file = MatFile::load(data_path)?;
+let a: i8 = mat_file.var("a")?;
+let b: f32 = mat_file.var("b")?;
+let c: Vec<u16> = mat_file.var("c")?;
+# Ok::<(), matio_rs::MatioError>(())
 ```
 
 Saving data to a Matlab structure
 ```
-    use matio_rs::{MatFile, Mat, MayBeFrom};
-    # let file = tempfile::NamedTempFile::new()?;
-    # let data_path = file.path();
-    let mat_a = Mat::maybe_from("fa", 123f64)?;
-    let b = vec![0i32, 1, 2, 3, 4];
-    let mat_v = Mat::maybe_from("fb", &b)?;
-    let data = vec![mat_a, mat_v];
-    let mat_struct = Mat::maybe_from("s", data)?;
-    let mat_file = MatFile::save(data_path)?;
-    mat_file.write(mat_struct);
-    # Ok::<(), matio_rs::MatioError>(())
+use matio_rs::{MatFile, Mat, MayBeFrom};
+# let file = tempfile::NamedTempFile::new()?;
+# let data_path = file.path();
+let mat_a = Mat::maybe_from("fa", 123f64)?;
+let b = vec![0i32, 1, 2, 3, 4];
+let mat_v = Mat::maybe_from("fb", &b)?;
+let data = vec![mat_a, mat_v];
+let mat_struct = Mat::maybe_from("s", data)?;
+let mat_file = MatFile::save(data_path)?;
+mat_file.write(mat_struct);
+# Ok::<(), matio_rs::MatioError>(())
 ```
 and then loading the structure fields back into Rust variables
 ```
-    use matio_rs::{MatFile, Mat, MayBeInto};
-    # use matio_rs::{MayBeFrom};
-    # let file = tempfile::NamedTempFile::new()?;
-    # let data_path = file.path();
-    # let mat_a = Mat::maybe_from("fa", 123f64)?;
-    # let b = vec![0i32, 1, 2, 3, 4];
-    # let mat_v = Mat::maybe_from("fb", &b)?;
-    # let data = vec![mat_a, mat_v];
-    # let mat_struct = Mat::maybe_from("s", data)?;
-    # let mat_file = MatFile::save(data_path)?;
-    # mat_file.write(mat_struct);
-    let mat_file = MatFile::load(&data_path)?;
-    let mat: Mat = mat_file.var("s")?;
-    let a: f64 = mat
-        .field("fa")?
-        .get(0).unwrap()
-        .maybe_into()?;
-    let b: Vec<i32> = mat
-        .field("fb")?
-        .get(0).unwrap()
-        .maybe_into()?;
-    # Ok::<(), matio_rs::MatioError>(())
+use matio_rs::{MatFile, Mat, MayBeInto};
+# use matio_rs::{MayBeFrom};
+# let file = tempfile::NamedTempFile::new()?;
+# let data_path = file.path();
+# let mat_a = Mat::maybe_from("fa", 123f64)?;
+# let b = vec![0i32, 1, 2, 3, 4];
+# let mat_v = Mat::maybe_from("fb", &b)?;
+# let data = vec![mat_a, mat_v];
+# let mat_struct = Mat::maybe_from("s", data)?;
+# let mat_file = MatFile::save(data_path)?;
+# mat_file.write(mat_struct);
+let mat_file = MatFile::load(&data_path)?;
+let mat: Mat = mat_file.var("s")?;
+let a: f64 = mat
+    .field("fa")?
+    .get(0).unwrap()
+    .maybe_into()?;
+let b: Vec<i32> = mat
+    .field("fb")?
+    .get(0).unwrap()
+    .maybe_into()?;
+# Ok::<(), matio_rs::MatioError>(())
 ```
 
 Rust structure with the [MatIO] derive attribute can be dispatched like any other variables:
@@ -89,22 +89,38 @@ struct Nested {
     a: f64,
     b: Vec<u32>,
 }
+let n = Nested {
+    a: 1f64,
+    b: vec![2, 3, 4, 5],
+};
+let a = SMat {
+    a: 1f64,
+    b: vec![2, 3, 4, 5],
+    s: n,
+};
+# let file = NamedTempFile::new().unwrap();
+MatFile::save(&file)?.var("a", &a)?;
+let aa: SMat = MatFile::load(file)?.var("a")?;
+# Ok::<(), matio_rs::MatioError>(())
+```
 
-    let n = Nested {
-        a: 1f64,
-        b: vec![2, 3, 4, 5],
-    };
-    let a = SMat {
-        a: 1f64,
-        b: vec![2, 3, 4, 5],
-        s: n,
-    };
-
-    # let file = NamedTempFile::new().unwrap();
-    MatFile::save(&file)?.var("a", &a)?;
-    let aa: SMat = MatFile::load(file)?.var("a")?;
-
-    # Ok::<(), matio_rs::MatioError>(())
+[nalgebra](https://docs.rs/nalgebra/latest/nalgebra/) vectors and matrices can be read from and
+ written to Mat files providing the `nalgebra` feature
+```
+use matio_rs::MatFile;
+# use tempfile::NamedTempFile;
+# let file = NamedTempFile::new().unwrap();
+let na_v = nalgebra::DVector::from_iterator(5, 0..5);
+MatFile::save(&file).unwrap().var("na_v", &na_v).unwrap();
+let v: nalgebra::DMatrix<i32> = MatFile::load(file).unwrap().var("na_v").unwrap();
+```
+```
+use matio_rs::MatFile;
+# use tempfile::NamedTempFile;
+# let file = NamedTempFile::new().unwrap();
+let na_v = nalgebra::DVector::from_iterator(5, 0..5);
+MatFile::save(&file).unwrap().var("na_v", &na_v).unwrap();
+let v: nalgebra::DMatrix<i32> = MatFile::load(file).unwrap().var("na_v").unwrap();
 ```
 */
 
