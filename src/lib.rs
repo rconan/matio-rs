@@ -118,9 +118,9 @@ let v: nalgebra::DMatrix<i32> = MatFile::load(file).unwrap().var("na_v").unwrap(
 use matio_rs::MatFile;
 # use tempfile::NamedTempFile;
 # let file = NamedTempFile::new().unwrap();
-let na_v = nalgebra::DVector::from_iterator(5, 0..5);
-MatFile::save(&file).unwrap().var("na_v", &na_v).unwrap();
-let v: nalgebra::DMatrix<i32> = MatFile::load(file).unwrap().var("na_v").unwrap();
+let na_m = nalgebra::DMatrix::from_iterator(3, 2, 0..6);
+MatFile::save(&file).unwrap().var("na_m", &na_m).unwrap();
+let m: nalgebra::DMatrix<i32> = MatFile::load(file).unwrap().var("na_m").unwrap();
 ```
 */
 
