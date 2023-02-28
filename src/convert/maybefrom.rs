@@ -1,6 +1,6 @@
 use std::{ffi::CString, marker::PhantomData, ptr, vec};
 
-use crate::{DataType, Mat, MatioError, Result};
+use crate::{DataType, Mat, MatArray, MatioError, Result};
 
 /// Convert a Rust data type into a [Mat] variable
 pub trait MayBeFrom<T> {
@@ -117,7 +117,30 @@ impl<'a> MayBeFrom<MatIterator<'a>> for Mat<'a> {
         <Mat<'a> as MayBeFrom<Vec<Vec<Mat<'a>>>>>::maybe_from(name, fields)
     }
 }
-
+impl<'a, T: DataType> MayBeFrom<MatArray<'a, T>> for Mat<'a> {
+    fn maybe_from<S: Into<String>>(name: S, mat_array: MatArray<T>) -> Result<Self> {
+        let c_name = CString::new(name.into())?;
+        // let mut dims = [1, data.len() as u64];
+        let matvar_t = unsafe {
+            ffi::Mat_VarCreate(
+                c_name.as_ptr(),
+                <T as DataType>::mat_c(),
+                <T as DataType>::mat_t(),
+                mat_array.dims.len() as i32,
+                mat_array.dims.as_ptr() as *mut _,
+                mat_array.data.as_ptr() as *mut std::ffi::c_void,
+                0,
+            )
+        };
+        if matvar_t.is_null() {
+            Err(MatioError::MatVarCreate(
+                c_name.to_str().unwrap().to_string(),
+            ))
+        } else {
+            Mat::from_ptr(c_name.to_str().unwrap(), matvar_t)
+        }
+    }
+}
 #[cfg(feature = "nalgebra")]
 impl<'a, T: DataType> MayBeFrom<nalgebra::DVector<T>> for Mat<'a> {
     fn maybe_from<S: Into<String>>(name: S, vector: nalgebra::DVector<T>) -> Result<Self>

@@ -104,6 +104,17 @@ let aa: SMat = MatFile::load(file)?.var("a")?;
 # Ok::<(), matio_rs::MatioError>(())
 ```
 
+Saving a Rust vector into a 3D Matlab array
+```
+use matio_rs::{MatFile, MatArray};
+# use tempfile::NamedTempFile;
+# let file = NamedTempFile::new().unwrap();
+let data: Vec<_> = (0..24).collect();
+MatFile::save(&file)?
+        .var("array", MatArray::new(&data, vec![3, 4, 2]))?;
+# Ok::<(), matio_rs::MatioError>(())
+```
+
 [nalgebra](https://docs.rs/nalgebra/latest/nalgebra/) vectors and matrices can be read from and
  written to Mat files providing the `nalgebra` feature
 ```
@@ -138,6 +149,8 @@ pub use mat::Mat;
 mod convert;
 pub use convert::{MayBeFrom, MayBeInto};
 pub use derive::MatIO;
+mod mat_array;
+pub use mat_array::MatArray;
 
 #[derive(Error, Debug)]
 pub enum MatioError {
