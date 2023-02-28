@@ -14,6 +14,27 @@ impl<'a> Deref for MatFileRead<'a> {
         &self.0
     }
 }
+impl<'a> MatFileRead<'a> {
+    /// Returns the list of variables within a [MatFile]
+    pub fn info(&self) {
+        let matvar_t = unsafe { ffi::Mat_VarReadNextInfo(self.mat_t) };
+        if !matvar_t.is_null() {
+            let name = unsafe { std::ffi::CStr::from_ptr((*matvar_t).name) };
+            let rank = unsafe { (*matvar_t).rank } as usize;
+            let mut dims: Vec<u64> = Vec::with_capacity(rank);
+            unsafe {
+                ptr::copy((*matvar_t).dims as *mut _, dims.as_mut_ptr(), rank);
+                dims.set_len(rank);
+            }
+            println!(
+                "Matlab var.: {:?} with dims: {:?}",
+                name.to_str().unwrap(),
+                dims
+            );
+            self.info();
+        }
+    }
+}
 /// [Mat file](crate::MatFile) writer
 pub struct MatFileWrite<'a>(MatFile<'a>);
 impl<'a> Deref for MatFileWrite<'a> {
