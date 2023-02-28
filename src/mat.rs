@@ -1,5 +1,5 @@
 use crate::{
-    MatFile, MatFileRead, MatFileWrite, MatType, MatioError, MayBeFrom, MayBeInto, Result,
+    MatArray, MatFile, MatFileRead, MatFileWrite, MatType, MatioError, MayBeFrom, MayBeInto, Result,
 };
 use std::{ffi::CStr, marker::PhantomData, ptr, slice::from_raw_parts};
 
@@ -96,6 +96,17 @@ impl<'a> MatFileWrite<'a> {
     {
         let mat: Mat<'a> = MayBeFrom::<T>::maybe_from(name, data)?;
         self.write(mat);
+        Ok(self)
+    }
+    /// Write to a [MatFileWrite]r the Matlab [Mat] variable `name` as a N-dimensition array [MatArray]
+    ///
+    /// The data is aligned according to and in the order of the dimension vector dims
+    pub fn array<S: Into<String>, T>(&self, name: S, data: &'a [T], dims: Vec<u64>) -> Result<&Self>
+    where
+        Mat<'a>: MayBeFrom<MatArray<'a, T>>,
+    {
+        let mat_array = MatArray::new(data, dims);
+        self.var(name, mat_array)?;
         Ok(self)
     }
 }

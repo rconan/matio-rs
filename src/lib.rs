@@ -111,7 +111,7 @@ use matio_rs::{MatFile, MatArray};
 # let file = NamedTempFile::new().unwrap();
 let data: Vec<_> = (0..24).collect();
 MatFile::save(&file)?
-        .var("array", MatArray::new(&data, vec![3, 4, 2]))?;
+        .array("array", &data, vec![3, 4, 2])?;
 # Ok::<(), matio_rs::MatioError>(())
 ```
 
