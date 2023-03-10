@@ -6,8 +6,12 @@ fn main() {
         .define("MATIO_MAT73", "OFF")
         .build();
     println!(
-        "cargo:rustc-link-search=native={}",
-        out.join("lib").display()
+        "cargo:rustc-link-search={}",
+        dbg!(out.join("lib").display())
+    );
+    println!(
+        "cargo:rustc-link-search={}",
+        dbg!(out.join("lib64").display())
     );
     println!("cargo:rustc-link-lib=matio");
     println!("cargo:rustc-link-lib=z");

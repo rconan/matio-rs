@@ -152,7 +152,7 @@ impl<'a> Mat<'a> {
         let n = unsafe { ffi::Mat_VarGetNumberOfFields(ptr) } as usize;
         // fields name
         let field_names = unsafe {
-            from_raw_parts(ffi::Mat_VarGetStructFieldnames(ptr) as *mut *mut i8, n)
+            from_raw_parts(ffi::Mat_VarGetStructFieldnames(ptr), n)
                 .into_iter()
                 .map(|&s| CStr::from_ptr(s).to_str())
                 .collect::<std::result::Result<Vec<&str>, std::str::Utf8Error>>()?
