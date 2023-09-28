@@ -9,7 +9,7 @@ MATLAB MAT file I/O C library
 - cmake
 - zlib
 
-## Install Dependencies on Debian
+## Installing dependencies on Ubuntu/Debian
 
 ```sh
 sudo apt install cmake zlib1g-dev
