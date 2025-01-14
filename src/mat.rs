@@ -173,7 +173,7 @@ impl<'a> Mat<'a> {
         })
     }
     /// Returns the field `name` from a Matlab structure
-    pub fn field<S: Into<String>>(&'a self, name: S) -> Result<Vec<&'a Mat>> {
+    pub fn field<S: Into<String>>(&self, name: S) -> Result<Vec<&Mat>> {
         let fields = if self.mat_type() == MatType::STRUCT {
             self.fields.as_ref().unwrap()
         } else {

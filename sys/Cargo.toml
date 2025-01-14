@@ -1,6 +1,6 @@
 [package]
 name = "matio-rs-sys"
-version = "0.2.2"
+version = "0.2.4"
 edition = "2021"
 authors = ["Rod Conan <rconan@gmto.org>"]
 license = "MIT"

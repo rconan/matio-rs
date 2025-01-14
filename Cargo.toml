@@ -1,6 +1,6 @@
 [package]
 name = "matio-rs"
-version = "1.3.1"
+version = "1.3.3"
 edition = "2021"
 authors = ["Rod Conan <rconan@gmto.org>"]
 license = "MIT"
@@ -11,17 +11,17 @@ readme = "README.md"
 categories = ["api-bindings", "mathematics", "science"]
 
 [dependencies]
-ffi = { version = "0.2.2", path = "sys", package = "matio-rs-sys" }
+ffi = { version = "0.2.4", path = "sys", package = "matio-rs-sys" }
 paste = "1.0.7"
 thiserror = "1.0.30"
 derive = { version = "0.1.0", path = "derive", package = "matio-rs_derive" }
-nalgebra = { version = "0.32.1", optional = true }
+nalgebra = { version = "0.33", optional = true }
 
 [dev-dependencies]
 anyhow = "1.0.66"
 bincode = "1.3.3"
 serde = { version = "1.0.147", features = ["derive"] }
-tempfile = "3.3.0"
+tempfile = "3.15.0"
 
 [package.metadata.docs.rs]
 all-features = true
