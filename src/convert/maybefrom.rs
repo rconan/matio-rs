@@ -217,3 +217,68 @@ impl<'a, T: DataType> MayBeFrom<&nalgebra::DMatrix<T>> for Mat<'a> {
         }
     }
 }
+
+#[cfg(feature = "faer")]
+impl<'a, T: Clone + DataType> MayBeFrom<faer::mat::MatRef<'a, T>> for Mat<'a> {
+    fn maybe_from<S: Into<String>>(name: S, matrix: faer::mat::MatRef<'a, T>) -> Result<Self>
+    where
+        Self: Sized,
+    {
+        let mut dims: [u64; 2] = [matrix.nrows() as u64, matrix.ncols() as u64];
+        let data: Vec<_> = matrix
+            .col_iter()
+            .map(|c| c.iter().cloned().collect::<Vec<T>>())
+            .collect();
+        let c_name = CString::new(name.into())?;
+        let matvar_t = unsafe {
+            ffi::Mat_VarCreate(
+                c_name.as_ptr(),
+                <T as DataType>::mat_c(),
+                <T as DataType>::mat_t(),
+                2,
+                dims.as_mut_ptr(),
+                data.as_ptr() as *mut std::ffi::c_void,
+                0,
+            )
+        };
+        if matvar_t.is_null() {
+            Err(MatioError::MatVarCreate(
+                c_name.to_str().unwrap().to_string(),
+            ))
+        } else {
+            Mat::from_ptr(c_name.to_str().unwrap(), matvar_t)
+        }
+    }
+}
+#[cfg(feature = "faer")]
+impl<'a, T: Clone + DataType> MayBeFrom<&faer::mat::Mat<T>> for Mat<'a> {
+    fn maybe_from<S: Into<String>>(name: S, matrix: &faer::mat::Mat<T>) -> Result<Self>
+    where
+        Self: Sized,
+    {
+        let mut dims: [u64; 2] = [matrix.nrows() as u64, matrix.ncols() as u64];
+        let data: Vec<_> = matrix
+            .col_iter()
+            .flat_map(|c| c.iter().cloned().collect::<Vec<T>>())
+            .collect();
+        let c_name = CString::new(name.into())?;
+        let matvar_t = unsafe {
+            ffi::Mat_VarCreate(
+                c_name.as_ptr(),
+                <T as DataType>::mat_c(),
+                <T as DataType>::mat_t(),
+                2,
+                dims.as_mut_ptr(),
+                data.as_ptr() as *mut std::ffi::c_void,
+                0,
+            )
+        };
+        if matvar_t.is_null() {
+            Err(MatioError::MatVarCreate(
+                c_name.to_str().unwrap().to_string(),
+            ))
+        } else {
+            Mat::from_ptr(c_name.to_str().unwrap(), matvar_t)
+        }
+    }
+}

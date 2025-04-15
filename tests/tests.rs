@@ -217,3 +217,37 @@ mod nalgebra_matio {
         assert_eq!(na_m, m);
     }
 }
+
+#[cfg(feature = "faer")]
+mod faer_matio {
+    use super::*;
+    #[test]
+    fn test_faer_vector() {
+        let data: Vec<_> = (0..5).collect();
+        let na_v = faer::mat::MatRef::from_column_major_slice(data.as_slice(), 5, 1).cloned();
+        println!("{na_v:?}");
+        let path = root();
+        MatFile::save(&path).unwrap().var("na_v", &na_v).unwrap();
+        let v: faer::mat::Mat<i32> = MatFile::load(path).unwrap().var("na_v").unwrap();
+        println!("{v:?}");
+        assert!(na_v
+            .col_iter()
+            .zip(v.col_iter())
+            .all(|(x, y)| x.iter().zip(y.iter()).all(|(x, y)| x == y)));
+    }
+
+    #[test]
+    fn test_faer_matrix() {
+        let data: Vec<_> = (0..6).collect();
+        let na_m = faer::mat::MatRef::from_column_major_slice(data.as_slice(), 3, 2).cloned();
+        println!("{na_m:?}");
+        let path = root();
+        MatFile::save(&path).unwrap().var("na_m", &na_m).unwrap();
+        let m: faer::mat::Mat<i32> = MatFile::load(path).unwrap().var("na_m").unwrap();
+        println!("{m:?}");
+        assert!(na_m
+            .col_iter()
+            .zip(m.col_iter())
+            .all(|(x, y)| x.iter().zip(y.iter()).all(|(x, y)| x == y)));
+    }
+}

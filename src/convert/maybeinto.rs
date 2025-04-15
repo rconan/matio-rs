@@ -89,3 +89,34 @@ impl<'a, T: DataType + Clone + std::cmp::PartialEq + std::fmt::Debug + 'static>
         ))
     }
 }
+
+#[cfg(feature = "faer")]
+impl<'a, T: DataType + Clone + std::cmp::PartialEq + std::fmt::Debug + 'static>
+    MayBeInto<faer::mat::Mat<T>> for Mat<'a>
+{
+    fn maybe_into(self) -> Result<faer::mat::Mat<T>> {
+        <&Mat<'a> as MayBeInto<faer::mat::Mat<T>>>::maybe_into(&self)
+    }
+}
+#[cfg(feature = "faer")]
+impl<'a, T: DataType + Clone + std::cmp::PartialEq + std::fmt::Debug + 'static>
+    MayBeInto<faer::mat::Mat<T>> for &Mat<'a>
+{
+    fn maybe_into(self) -> Result<faer::mat::Mat<T>> {
+        if T::mat_type() != self.mat_type() {
+            return Err(MatioError::TypeMismatch(
+                self.name.clone(),
+                T::to_string(),
+                self.mat_type().to_string(),
+            ));
+        }
+        if self.rank() > 2 {
+            return Err(MatioError::Rank(self.rank()));
+        }
+        let dims = self.dims();
+        let (nrows, ncols) = (dims[0] as usize, dims[1] as usize);
+        let data: Vec<T> = self.maybe_into()?;
+        let mat = faer::MatRef::from_column_major_slice(data.as_slice(), nrows, ncols);
+        Ok(mat.cloned())
+    }
+}
