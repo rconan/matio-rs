@@ -13,8 +13,20 @@ fn main() {
         "cargo:rustc-link-search={}",
         dbg!(out.join("lib64").display())
     );
-    println!("cargo:rustc-link-lib=matio");
-    println!("cargo:rustc-link-lib=z");
+
+    if cfg!(target_os = "windows") {
+        println!("cargo:rustc-link-lib=libmatio");
+        if let Ok(lib_dir) = std::env::var("ZLIB_LIB_DIR") {
+            println!("cargo:rustc-link-search={}", lib_dir);
+        } else {
+            panic!("ZLIB_LIB_DIR environment variable not set");
+        }
+        println!("cargo:rustc-link-lib=zlib");
+    } else {
+        println!("cargo:rustc-link-lib=matio");
+        println!("cargo:rustc-link-lib=z");
+    }
+
     println!("cargo:rerun-if-changed=wrapper.h");
 
     let bindings = bindgen::Builder::default()
