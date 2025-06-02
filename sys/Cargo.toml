@@ -1,6 +1,6 @@
 [package]
 name = "matio-rs-sys"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2021"
 authors = ["Rod Conan <rconan@gmto.org>"]
 license = "MIT"
@@ -11,5 +11,5 @@ readme = "README.md"
 categories = ["external-ffi-bindings", "mathematics", "science"]
 
 [build-dependencies]
-bindgen = "0.59.2"
-cmake = "0.1.48"
+bindgen = "0.71.1"
+cmake = "0.1.54"

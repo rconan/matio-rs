@@ -116,9 +116,9 @@ impl<'a> Mat<'a> {
         unsafe { (*self.matvar_t).rank as usize }
     }
     /// Returns the dimensions of the Matlab variable
-    pub fn dims(&self) -> Vec<u64> {
+    pub fn dims(&self) -> Vec<usize> {
         let rank = self.rank();
-        let mut dims: Vec<u64> = Vec::with_capacity(rank);
+        let mut dims: Vec<usize> = Vec::with_capacity(rank);
         unsafe {
             ptr::copy((*self.matvar_t).dims, dims.as_mut_ptr(), rank);
             dims.set_len(rank);
@@ -127,7 +127,7 @@ impl<'a> Mat<'a> {
     }
     /// Returns the number of elements of the Matlab variable
     pub fn len(&self) -> usize {
-        self.dims().into_iter().product::<u64>() as usize
+        self.dims().into_iter().product::<usize>() as usize
     }
     pub(crate) fn mat_type(&self) -> MatType {
         MatType::from_ptr(self.matvar_t)
@@ -143,12 +143,12 @@ impl<'a> Mat<'a> {
         }
 
         let rank = unsafe { (*ptr).rank as usize };
-        let mut dims: Vec<u64> = Vec::with_capacity(rank);
+        let mut dims: Vec<usize> = Vec::with_capacity(rank);
         unsafe {
             ptr::copy((*ptr).dims, dims.as_mut_ptr(), rank);
             dims.set_len(rank);
         };
-        let nel: u64 = dims.iter().product();
+        let nel: usize = dims.iter().product();
         let n = unsafe { ffi::Mat_VarGetNumberOfFields(ptr) } as usize;
         // fields name
         let field_names = unsafe {
@@ -158,8 +158,7 @@ impl<'a> Mat<'a> {
                 .collect::<std::result::Result<Vec<&str>, std::str::Utf8Error>>()?
         };
         // fields data pointer
-        let field_ptr =
-            unsafe { from_raw_parts((*ptr).data as *mut *mut ffi::matvar_t, n * nel as usize) };
+        let field_ptr = unsafe { from_raw_parts((*ptr).data as *mut *mut ffi::matvar_t, n * nel) };
         let mut fields: Vec<Mat> = Vec::new();
         for (name, &ptr) in field_names.into_iter().cycle().zip(field_ptr.iter()) {
             let mat = Mat::from_ptr(name, ptr)?;

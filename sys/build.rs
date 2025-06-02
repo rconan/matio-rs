@@ -33,7 +33,7 @@ fn main() {
         .clang_arg(&format!("-I{}", out.join("include").display()))
         .clang_arg("-Imatio/src")
         .header("wrapper.h")
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         .generate()
         .expect("Unable to generate bindings");
 

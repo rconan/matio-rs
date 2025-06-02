@@ -45,7 +45,7 @@ impl<'a, T: DataType> MayBeFrom<Vec<T>> for Mat<'a> {
 impl<'a, T: DataType> MayBeFrom<&[T]> for Mat<'a> {
     fn maybe_from<S: Into<String>>(name: S, data: &[T]) -> Result<Self> {
         let c_name = CString::new(name.into())?;
-        let mut dims = [1, data.len() as u64];
+        let mut dims = [1, data.len()];
         let matvar_t = unsafe {
             ffi::Mat_VarCreate(
                 c_name.as_ptr(),
@@ -76,7 +76,7 @@ type VecArray<'a> = Vec<Vec<Mat<'a>>>;
 impl<'a> MayBeFrom<VecArray<'a>> for Mat<'a> {
     fn maybe_from<S: Into<String>>(name: S, fields: VecArray<'a>) -> Result<Self> {
         let c_name = CString::new(name.into())?;
-        let mut dims = [1u64, fields[0].len() as u64];
+        let mut dims = [1usize, fields[0].len()];
         let matvar_t = unsafe {
             ffi::Mat_VarCreateStruct(c_name.as_ptr(), 2, dims.as_mut_ptr(), ptr::null_mut(), 0)
         };
@@ -93,7 +93,7 @@ impl<'a> MayBeFrom<VecArray<'a>> for Mat<'a> {
             for (index, field) in field_array.iter().enumerate() {
                 let ptr = field.matvar_t as *mut ffi::matvar_t;
                 unsafe {
-                    ffi::Mat_VarSetStructFieldByName(matvar_t, c_name.as_ptr(), index as u64, ptr);
+                    ffi::Mat_VarSetStructFieldByName(matvar_t, c_name.as_ptr(), index, ptr);
                 }
             }
         }
@@ -156,7 +156,7 @@ impl<'a, T: DataType> MayBeFrom<&nalgebra::DVector<T>> for Mat<'a> {
     where
         Self: Sized,
     {
-        let mut dims: [u64; 2] = [vector.len() as u64, 1u64];
+        let mut dims: [usize; 2] = [vector.len(), 1usize];
         let data = vector.as_slice();
         let c_name = CString::new(name.into())?;
         let matvar_t = unsafe {
@@ -194,7 +194,7 @@ impl<'a, T: DataType> MayBeFrom<&nalgebra::DMatrix<T>> for Mat<'a> {
     where
         Self: Sized,
     {
-        let mut dims: [u64; 2] = [matrix.nrows() as u64, matrix.ncols() as u64];
+        let mut dims: [usize; 2] = [matrix.nrows(), matrix.ncols()];
         let data = matrix.as_slice();
         let c_name = CString::new(name.into())?;
         let matvar_t = unsafe {
@@ -224,7 +224,7 @@ impl<'a, T: Clone + DataType> MayBeFrom<faer::mat::MatRef<'a, T>> for Mat<'a> {
     where
         Self: Sized,
     {
-        let mut dims: [u64; 2] = [matrix.nrows() as u64, matrix.ncols() as u64];
+        let mut dims: [usize; 2] = [matrix.nrows(), matrix.ncols()];
         let data: Vec<_> = matrix
             .col_iter()
             .map(|c| c.iter().cloned().collect::<Vec<T>>())
@@ -256,7 +256,7 @@ impl<'a, T: Clone + DataType> MayBeFrom<&faer::mat::Mat<T>> for Mat<'a> {
     where
         Self: Sized,
     {
-        let mut dims: [u64; 2] = [matrix.nrows() as u64, matrix.ncols() as u64];
+        let mut dims: [usize; 2] = [matrix.nrows(), matrix.ncols()];
         let data: Vec<_> = matrix
             .col_iter()
             .flat_map(|c| c.iter().cloned().collect::<Vec<T>>())
