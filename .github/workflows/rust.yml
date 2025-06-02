@@ -11,14 +11,32 @@ env:
 
 jobs:
   build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
 
-    runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
     - name: Build
       run: cargo build --verbose --all-features
+      
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: build
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
     - name: Run tests
       run: cargo test --verbose --all-features
