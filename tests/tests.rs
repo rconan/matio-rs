@@ -25,6 +25,14 @@ fn test_string() {
 }
 
 #[test]
+fn test_cell_string() {
+    // let path = root();
+    let mat_file = MatFile::save("test_cell_string.mat").unwrap();
+    let a = vec!["qwe", "asd", "zxc"];
+    mat_file.var("a", a).unwrap();
+}
+
+#[test]
 fn test_read_write_scalar() {
     let path = root();
     let mat_file = MatFile::save(&path).unwrap();
