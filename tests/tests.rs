@@ -10,10 +10,18 @@ pub fn root() -> PathBuf {
 
 #[test]
 fn test_string() {
-    let mat_file = MatFile::save("test_string.mat").unwrap();
+    let path = root();
+    let mat_file = MatFile::save(&path).unwrap();
     mat_file.var("a", "qwe").unwrap();
     mat_file.var("b", String::from("asd")).unwrap();
     mat_file.var("c", &String::from("zxc")).unwrap();
+    let mat_file = MatFile::load(&path).unwrap();
+    let a: String = mat_file.var("a").unwrap();
+    assert_eq!(a, "qwe");
+    let b: String = mat_file.var("b").unwrap();
+    assert_eq!(b, "asd");
+    let c: String = mat_file.var("c").unwrap();
+    assert_eq!(c, "zxc");
 }
 
 #[test]
