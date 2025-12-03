@@ -129,51 +129,52 @@ impl<'a> Mat<'a> {
     pub fn len(&self) -> usize {
         self.dims().into_iter().product::<usize>() as usize
     }
-    pub(crate) fn mat_type(&self) -> MatType {
+    pub(crate) fn mat_type(&self) -> Option<MatType> {
         MatType::from_ptr(self.matvar_t)
     }
     pub(crate) fn from_ptr<S: Into<String>>(name: S, ptr: *mut ffi::matvar_t) -> Result<Self> {
-        if MatType::from_ptr(ptr) != MatType::STRUCT {
-            return Ok(Mat {
+        if let Some(MatType::STRUCT) = MatType::from_ptr(ptr) {
+            let rank = unsafe { (*ptr).rank as usize };
+            let mut dims: Vec<usize> = Vec::with_capacity(rank);
+            unsafe {
+                ptr::copy((*ptr).dims, dims.as_mut_ptr(), rank);
+                dims.set_len(rank);
+            };
+            let nel: usize = dims.iter().product();
+            let n = unsafe { ffi::Mat_VarGetNumberOfFields(ptr) } as usize;
+            // fields name
+            let field_names = unsafe {
+                from_raw_parts(ffi::Mat_VarGetStructFieldnames(ptr), n)
+                    .into_iter()
+                    .map(|&s| CStr::from_ptr(s).to_str())
+                    .collect::<std::result::Result<Vec<&str>, std::str::Utf8Error>>()?
+            };
+            // fields data pointer
+            let field_ptr =
+                unsafe { from_raw_parts((*ptr).data as *mut *mut ffi::matvar_t, n * nel) };
+            let mut fields: Vec<Mat> = Vec::new();
+            for (name, &ptr) in field_names.into_iter().cycle().zip(field_ptr.iter()) {
+                let mat = Mat::from_ptr(name, ptr)?;
+                fields.push(mat);
+            }
+            Ok(Mat {
+                name: name.into(),
+                matvar_t: ptr,
+                fields: Some(fields),
+                marker: PhantomData,
+            })
+        } else {
+            Ok(Mat {
                 name: name.into(),
                 matvar_t: ptr,
                 fields: None,
                 marker: PhantomData,
-            });
+            })
         }
-
-        let rank = unsafe { (*ptr).rank as usize };
-        let mut dims: Vec<usize> = Vec::with_capacity(rank);
-        unsafe {
-            ptr::copy((*ptr).dims, dims.as_mut_ptr(), rank);
-            dims.set_len(rank);
-        };
-        let nel: usize = dims.iter().product();
-        let n = unsafe { ffi::Mat_VarGetNumberOfFields(ptr) } as usize;
-        // fields name
-        let field_names = unsafe {
-            from_raw_parts(ffi::Mat_VarGetStructFieldnames(ptr), n)
-                .into_iter()
-                .map(|&s| CStr::from_ptr(s).to_str())
-                .collect::<std::result::Result<Vec<&str>, std::str::Utf8Error>>()?
-        };
-        // fields data pointer
-        let field_ptr = unsafe { from_raw_parts((*ptr).data as *mut *mut ffi::matvar_t, n * nel) };
-        let mut fields: Vec<Mat> = Vec::new();
-        for (name, &ptr) in field_names.into_iter().cycle().zip(field_ptr.iter()) {
-            let mat = Mat::from_ptr(name, ptr)?;
-            fields.push(mat);
-        }
-        Ok(Mat {
-            name: name.into(),
-            matvar_t: ptr,
-            fields: Some(fields),
-            marker: PhantomData,
-        })
     }
     /// Returns the field `name` from a Matlab structure
-    pub fn field<S: Into<String>>(&self, name: S) -> Result<Vec<&Mat>> {
-        let fields = if self.mat_type() == MatType::STRUCT {
+    pub fn field<S: Into<String>>(&self, name: S) -> Result<Vec<&Mat<'_>>> {
+        let fields = if let Some(MatType::STRUCT) = self.mat_type() {
             self.fields.as_ref().unwrap()
         } else {
             return Err(MatioError::TypeMismatch(

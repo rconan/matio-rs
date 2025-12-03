@@ -10,14 +10,15 @@ impl<'a, T: DataType> MayBeInto<T> for &Mat<'a> {
         if self.len() > 1 {
             return Err(MatioError::Scalar(self.name.clone(), self.len()));
         }
-        if T::mat_type() == self.mat_type() {
-            Ok(unsafe { ((*self.matvar_t).data as *mut T).read() })
-        } else {
-            Err(MatioError::TypeMismatch(
+        match self.mat_type() {
+            Some(mat) if T::mat_type() == mat => {
+                Ok(unsafe { ((*self.matvar_t).data as *mut T).read() })
+            }
+            _ => Err(MatioError::TypeMismatch(
                 self.name.clone(),
                 T::to_string(),
-                self.mat_type().to_string(),
-            ))
+                self.mat_type().map(|t| t.to_string()).unwrap_or_default(),
+            )),
         }
     }
 }
@@ -29,20 +30,22 @@ impl<'a, T: DataType> MayBeInto<T> for Mat<'a> {
 
 impl<'a, T: DataType> MayBeInto<Vec<T>> for &Mat<'a> {
     fn maybe_into(self) -> Result<Vec<T>> {
-        if T::mat_type() != self.mat_type() {
-            return Err(MatioError::TypeMismatch(
+        match self.mat_type() {
+            Some(mat) if T::mat_type() == mat => {
+                let n = self.len();
+                let mut value: Vec<T> = Vec::with_capacity(n);
+                unsafe {
+                    ptr::copy((*self.matvar_t).data as *mut T, value.as_mut_ptr(), n);
+                    value.set_len(n);
+                }
+                Ok(value)
+            }
+            _ => Err(MatioError::TypeMismatch(
                 self.name.clone(),
                 T::to_string(),
-                self.mat_type().to_string(),
-            ));
+                self.mat_type().map(|t| t.to_string()).unwrap_or_default(),
+            )),
         }
-        let n = self.len();
-        let mut value: Vec<T> = Vec::with_capacity(n);
-        unsafe {
-            ptr::copy((*self.matvar_t).data as *mut T, value.as_mut_ptr(), n);
-            value.set_len(n);
-        }
-        Ok(value)
     }
 }
 impl<'a, T: DataType> MayBeInto<Vec<T>> for Mat<'a> {
@@ -69,24 +72,26 @@ impl<'a, T: DataType + Clone + std::cmp::PartialEq + std::fmt::Debug + 'static>
     MayBeInto<nalgebra::DMatrix<T>> for &Mat<'a>
 {
     fn maybe_into(self) -> Result<nalgebra::DMatrix<T>> {
-        if T::mat_type() != self.mat_type() {
-            return Err(MatioError::TypeMismatch(
+        match self.mat_type() {
+            Some(mat) if T::mat_type() == mat => {
+                if self.rank() > 2 {
+                    return Err(MatioError::Rank(self.rank()));
+                }
+                let dims = self.dims();
+                let (nrows, ncols) = (dims[0] as usize, dims[1] as usize);
+                let data: Vec<T> = self.maybe_into()?;
+                Ok(nalgebra::DMatrix::from_column_slice(
+                    nrows,
+                    ncols,
+                    data.as_slice(),
+                ))
+            }
+            _ => Err(MatioError::TypeMismatch(
                 self.name.clone(),
                 T::to_string(),
-                self.mat_type().to_string(),
-            ));
+                self.mat_type().map(|t| t.to_string()).unwrap_or_default(),
+            )),
         }
-        if self.rank() > 2 {
-            return Err(MatioError::Rank(self.rank()));
-        }
-        let dims = self.dims();
-        let (nrows, ncols) = (dims[0] as usize, dims[1] as usize);
-        let data: Vec<T> = self.maybe_into()?;
-        Ok(nalgebra::DMatrix::from_column_slice(
-            nrows,
-            ncols,
-            data.as_slice(),
-        ))
     }
 }
 
@@ -103,20 +108,22 @@ impl<'a, T: DataType + Clone + std::cmp::PartialEq + std::fmt::Debug + 'static>
     MayBeInto<faer::mat::Mat<T>> for &Mat<'a>
 {
     fn maybe_into(self) -> Result<faer::mat::Mat<T>> {
-        if T::mat_type() != self.mat_type() {
-            return Err(MatioError::TypeMismatch(
+        match self.mat_type() {
+            Some(mat) if T::mat_type() == mat => {
+                if self.rank() > 2 {
+                    return Err(MatioError::Rank(self.rank()));
+                }
+                let dims = self.dims();
+                let (nrows, ncols) = (dims[0] as usize, dims[1] as usize);
+                let data: Vec<T> = self.maybe_into()?;
+                let mat = faer::MatRef::from_column_major_slice(data.as_slice(), nrows, ncols);
+                Ok(mat.cloned())
+            }
+            _ => Err(MatioError::TypeMismatch(
                 self.name.clone(),
                 T::to_string(),
-                self.mat_type().to_string(),
-            ));
+                self.mat_type().map(|t| t.to_string()).unwrap_or_default(),
+            )),
         }
-        if self.rank() > 2 {
-            return Err(MatioError::Rank(self.rank()));
-        }
-        let dims = self.dims();
-        let (nrows, ncols) = (dims[0] as usize, dims[1] as usize);
-        let data: Vec<T> = self.maybe_into()?;
-        let mat = faer::MatRef::from_column_major_slice(data.as_slice(), nrows, ncols);
-        Ok(mat.cloned())
     }
 }

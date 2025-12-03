@@ -9,6 +9,14 @@ pub fn root() -> PathBuf {
 }
 
 #[test]
+fn test_string() {
+    let mat_file = MatFile::save("test_string.mat").unwrap();
+    mat_file.var("a", "qwe").unwrap();
+    mat_file.var("b", String::from("asd")).unwrap();
+    mat_file.var("c", &String::from("zxc")).unwrap();
+}
+
+#[test]
 fn test_read_write_scalar() {
     let path = root();
     let mat_file = MatFile::save(&path).unwrap();

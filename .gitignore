@@ -1,6 +1,6 @@
 /target
 Cargo.lock
 *~
-struct*.mat
+*.mat
 data/*
 
