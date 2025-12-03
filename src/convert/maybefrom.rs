@@ -296,6 +296,7 @@ impl<'a> MayBeFrom<VecArray<'a>> for Mat<'a> {
             matvar_t,
             fields: Some(fields.into_iter().flatten().collect()),
             marker: PhantomData,
+            as_ref: false,
         })
     }
 }
@@ -348,8 +349,8 @@ impl<'a> MayBeFrom<&String> for Mat<'a> {
     }
 }
 
-impl<'a> MayBeFrom<Vec<&str>> for Mat<'a> {
-    fn maybe_from<S: Into<String>>(name: S, data: Vec<&str>) -> Result<Self> {
+impl<'a> MayBeFrom<&[&str]> for Mat<'a> {
+    fn maybe_from<S: Into<String>>(name: S, data: &[&str]) -> Result<Self> {
         let c_name = CString::new(name.into())?;
         let mut dims = [1, data.len()];
         let matcell_t = unsafe {
@@ -387,13 +388,21 @@ impl<'a> MayBeFrom<Vec<&str>> for Mat<'a> {
         }
     }
 }
+impl<'a> MayBeFrom<Vec<&str>> for Mat<'a> {
+    fn maybe_from<S: Into<String>>(name: S, data: Vec<&str>) -> Result<Self>
+    where
+        Self: Sized,
+    {
+        <Mat<'a> as MayBeFrom<&[&str]>>::maybe_from(name, data.as_slice())
+    }
+}
 impl<'a> MayBeFrom<Vec<String>> for Mat<'a> {
     fn maybe_from<S: Into<String>>(name: S, data: Vec<String>) -> Result<Self>
     where
         Self: Sized,
     {
         let data: Vec<_> = data.iter().map(|s| s.as_str()).collect();
-        <Mat<'a> as MayBeFrom<Vec<&str>>>::maybe_from(name, data)
+        <Mat<'a> as MayBeFrom<&[&str]>>::maybe_from(name, data.as_slice())
     }
 }
 impl<'a> MayBeFrom<Vec<&String>> for Mat<'a> {
@@ -403,5 +412,13 @@ impl<'a> MayBeFrom<Vec<&String>> for Mat<'a> {
     {
         let data: Vec<_> = data.iter().map(|s| s.as_str()).collect();
         <Mat<'a> as MayBeFrom<Vec<&str>>>::maybe_from(name, data)
+    }
+}
+impl<'a> MayBeFrom<&Vec<&str>> for Mat<'a> {
+    fn maybe_from<S: Into<String>>(name: S, data: &Vec<&str>) -> Result<Self>
+    where
+        Self: Sized,
+    {
+        <Mat<'a> as MayBeFrom<&[&str]>>::maybe_from(name, data)
     }
 }

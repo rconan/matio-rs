@@ -49,6 +49,15 @@ impl DataType for String {
         "String".into()
     }
 }
+impl DataType for Vec<String> {
+    fn mat_type() -> MatType {
+        MatType::CELL
+    }
+
+    fn to_string() -> String {
+        "String".into()
+    }
+}
 
 map! {
 (f64, DOUBLE),
@@ -77,6 +86,7 @@ pub enum MatType {
     UINT64,
     STRUCT,
     CHAR,
+    CELL,
 }
 
 macro_rules! impl_mat_type {
@@ -116,5 +126,6 @@ impl_mat_type! {
  (UINT32,UINT32),
  (UINT64,UINT64),
  (STRUCT,STRUCT),
- (CHAR,UTF8)
+ (CHAR,UTF8),
+ (CELL,CELL)
 }

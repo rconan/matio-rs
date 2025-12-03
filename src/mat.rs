@@ -9,6 +9,7 @@ pub struct Mat<'a> {
     pub(crate) matvar_t: *mut ffi::matvar_t,
     pub(crate) fields: Option<Vec<Mat<'a>>>,
     pub(crate) marker: PhantomData<&'a ffi::matvar_t>,
+    pub(crate) as_ref: bool,
 }
 impl<'a> Drop for Mat<'a> {
     fn drop(&mut self) {
@@ -17,8 +18,10 @@ impl<'a> Drop for Mat<'a> {
                 mat.matvar_t = ptr::null_mut();
             })
         }
-        unsafe {
-            ffi::Mat_VarFree(self.matvar_t);
+        if !self.as_ref {
+            unsafe {
+                ffi::Mat_VarFree(self.matvar_t);
+            }
         }
     }
 }
@@ -132,6 +135,12 @@ impl<'a> Mat<'a> {
     pub(crate) fn mat_type(&self) -> Option<MatType> {
         MatType::from_ptr(self.matvar_t)
     }
+    pub(crate) fn as_ptr<S: Into<String>>(name: S, ptr: *mut ffi::matvar_t) -> Result<Self> {
+        Self::from_ptr(name, ptr).map(|mut mat| {
+            mat.as_ref = true;
+            mat
+        })
+    }
     pub(crate) fn from_ptr<S: Into<String>>(name: S, ptr: *mut ffi::matvar_t) -> Result<Self> {
         if let Some(MatType::STRUCT) = MatType::from_ptr(ptr) {
             let rank = unsafe { (*ptr).rank as usize };
@@ -162,6 +171,7 @@ impl<'a> Mat<'a> {
                 matvar_t: ptr,
                 fields: Some(fields),
                 marker: PhantomData,
+                as_ref: false,
             })
         } else {
             Ok(Mat {
@@ -169,6 +179,7 @@ impl<'a> Mat<'a> {
                 matvar_t: ptr,
                 fields: None,
                 marker: PhantomData,
+                as_ref: false,
             })
         }
     }

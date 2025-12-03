@@ -175,3 +175,26 @@ impl<'a> MayBeInto<String> for Mat<'a> {
         }
     }
 }
+
+impl<'a> MayBeInto<Vec<String>> for Mat<'a> {
+    fn maybe_into(self) -> Result<Vec<String>> {
+        match self.mat_type() {
+            Some(mat) if <Vec<String> as DataType>::mat_type() == mat => {
+                let n = self.len();
+                let mut value: Vec<String> = Vec::with_capacity(n);
+                for i in 0..n {
+                    let matvar_t = unsafe { ffi::Mat_VarGetCell(self.matvar_t, i as i32) };
+                    let mat = Mat::as_ptr(String::new(), matvar_t)?;
+                    let rs = <Mat<'a> as MayBeInto<String>>::maybe_into(mat)?;
+                    value.push(rs);
+                }
+                Ok(value)
+            }
+            _ => Err(MatioError::TypeMismatch(
+                self.name.clone(),
+                <Vec<String> as DataType>::to_string(),
+                self.mat_type().map(|t| t.to_string()).unwrap_or_default(),
+            )),
+        }
+    }
+}

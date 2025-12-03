@@ -26,10 +26,13 @@ fn test_string() {
 
 #[test]
 fn test_cell_string() {
-    // let path = root();
-    let mat_file = MatFile::save("test_cell_string.mat").unwrap();
-    let a = vec!["qwe", "asd", "zxc"];
-    mat_file.var("a", a).unwrap();
+    let path = root();
+    let mat_file = MatFile::save(&path).unwrap();
+    let a_rs = vec!["qwe", "asd", "zxc"];
+    mat_file.var("a", &a_rs).unwrap();
+    let mat_file = MatFile::load(&path).unwrap();
+    let a_mat: Vec<String> = mat_file.var("a").unwrap();
+    assert_eq!(a_rs, a_mat);
 }
 
 #[test]
