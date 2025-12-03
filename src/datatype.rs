@@ -2,8 +2,6 @@ use paste::paste;
 
 /// Rust to Matlab data type mapping
 pub trait DataType {
-    fn mat_c() -> ffi::matio_classes;
-    fn mat_t() -> ffi::matio_types;
     fn mat_type() -> MatType;
     fn to_string() -> String;
 }
@@ -13,12 +11,6 @@ macro_rules! map {
 	    $(
         paste! {
             impl DataType for $rs {
-            fn mat_c() -> ffi::matio_classes {
-                        ffi::[<matio_classes_MAT_C_ $mat>]
-            }
-            fn mat_t() -> ffi::matio_types {
-                        ffi::[<matio_types_MAT_T_ $mat>]
-            }
             fn mat_type() -> MatType {
                 MatType::$mat
             }
@@ -27,12 +19,6 @@ macro_rules! map {
             }
             }
             impl DataType for &$rs {
-            fn mat_c() -> ffi::matio_classes {
-                        ffi::[<matio_classes_MAT_C_ $mat>]
-            }
-            fn mat_t() -> ffi::matio_types {
-                        ffi::[<matio_types_MAT_T_ $mat>]
-            }
             fn mat_type() -> MatType {
                 MatType::$mat
             }
@@ -46,20 +32,21 @@ macro_rules! map {
 }
 
 impl DataType for &str {
-    fn mat_c() -> ffi::matio_classes {
-        ffi::matio_classes_MAT_C_CHAR
-    }
-
-    fn mat_t() -> ffi::matio_types {
-        ffi::matio_types_MAT_T_UINT8
-    }
-
     fn mat_type() -> MatType {
-        MatType::UINT8
+        MatType::CHAR
     }
 
     fn to_string() -> String {
-        "str".into()
+        "&str".into()
+    }
+}
+impl DataType for String {
+    fn mat_type() -> MatType {
+        MatType::CHAR
+    }
+
+    fn to_string() -> String {
+        "String".into()
     }
 }
 
@@ -89,17 +76,18 @@ pub enum MatType {
     UINT32,
     UINT64,
     STRUCT,
+    CHAR,
 }
 
 macro_rules! impl_mat_type {
-    ( $( $mat:expr ),+ ) => {
+    ( $( ($mat_c:expr,$mat_t:expr) ),+ ) => {
         paste! {
         impl MatType {
             pub fn from_ptr(ptr: *const ffi::matvar_t) -> Option<Self >{
                 let mat_ct = unsafe { ((*ptr).class_type, (*ptr).data_type) };
                 match mat_ct {
                     $(
-                    (ffi::[<matio_classes_MAT_C_ $mat>], ffi::[<matio_types_MAT_T_ $mat>]) => Some(MatType::$mat),
+                    (ffi::[<matio_classes_MAT_C_ $mat_c>], ffi::[<matio_types_MAT_T_ $mat_t>]) => Some(MatType::$mat_c),
                     )+
                     _ => None
                 }
@@ -107,7 +95,7 @@ macro_rules! impl_mat_type {
             pub fn to_string(&self) -> String {
                 match self {
                     $(
-                        MatType::$mat => stringify!($mat).to_string(),
+                        MatType::$mat_c => stringify!($mat_c).to_string(),
                     )+
                 }
             }
@@ -117,15 +105,16 @@ macro_rules! impl_mat_type {
 }
 
 impl_mat_type! {
- DOUBLE,
- SINGLE,
- INT8,
- INT16,
- INT32,
- INT64,
- UINT8,
- UINT16,
- UINT32,
- UINT64,
- STRUCT
+ (DOUBLE,DOUBLE),
+ (SINGLE,SINGLE),
+ (INT8,INT8),
+ (INT16,INT16),
+ (INT32,INT32),
+ (INT64,INT64),
+ (UINT8,UINT8),
+ (UINT16,UINT16),
+ (UINT32,UINT32),
+ (UINT64,UINT64),
+ (STRUCT,STRUCT),
+ (CHAR,UTF8)
 }

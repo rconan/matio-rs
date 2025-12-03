@@ -135,7 +135,7 @@ let m: nalgebra::DMatrix<i32> = MatFile::load(file).unwrap().var("na_m").unwrap(
 ```
 */
 
-use std::io;
+use std::{io, string::FromUtf8Error};
 use thiserror::Error;
 
 // mod builder;
@@ -180,5 +180,7 @@ pub enum MatioError {
     FieldNotFound(String),
     #[error("expected rank 2, found {0}")]
     Rank(usize),
+    #[error("failed to convert Matlab char array to String")]
+    CharConversion(#[from] FromUtf8Error),
 }
 pub type Result<T> = std::result::Result<T, MatioError>;
