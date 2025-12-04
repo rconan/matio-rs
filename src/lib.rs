@@ -14,7 +14,10 @@ use matio_rs::MatFile;
 MatFile::save(data_path)?
     .var("a", 1i8)?
     .var("b", 2f32)?
-    .var("c", &vec![3u16; 3])?;
+    .var("c", &vec![3u16; 3])?
+    .var("d", "qwerty")?
+    .var("e", (1.2f64, 3.45f64, 6.789f64))?
+    .var("f", vec!["cogito", "ergo sum"])?;
 # Ok::<(), matio_rs::MatioError>(())
 ```
 and then loading the data back into Rust
@@ -25,11 +28,17 @@ and then loading the data back into Rust
 # MatFile::save(data_path)?
 #   .var("a", 1i8)?
 #    .var("b", 2f32)?
-#    .var("c", &vec![3u16; 3])?;
+#    .var("c", &vec![3u16; 3])?
+#    .var("d", "qwerty")?
+#    .var("e",(1.2f64,3.45f64,6.789f64))?
+#    .var("f", vec!["cogito", "ergo sum"])?;
 let mat_file = MatFile::load(data_path)?;
 let a: i8 = mat_file.var("a")?;
 let b: f32 = mat_file.var("b")?;
 let c: Vec<u16> = mat_file.var("c")?;
+let d: String = mat_file.var("d")?;
+let e: Vec<f64> = mat_file.var("e")?;
+let f: Vec<String> = mat_file.var("f")?;
 # Ok::<(), matio_rs::MatioError>(())
 ```
 
