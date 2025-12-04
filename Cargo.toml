@@ -1,7 +1,7 @@
 [package]
 name = "matio-rs"
-version = "1.4.1"
-edition = "2021"
+version = "1.5.0"
+edition = "2024"
 authors = ["Rod Conan <rconan@gmto.org>"]
 license = "MIT"
 description = "Rust wrapper to MATLAB MAT file I/O library"
@@ -13,7 +13,7 @@ categories = ["api-bindings", "mathematics", "science"]
 [dependencies]
 ffi = { version = "0.2.5", path = "sys", package = "matio-rs-sys" }
 paste = "1.0.15"
-thiserror = "2.0.12"
+thiserror = "2.0.17"
 derive = { version = "0.1.0", path = "derive", package = "matio-rs_derive" }
 nalgebra = { version = "0.33", optional = true }
 faer = { version = "0.21.7", optional = true }
