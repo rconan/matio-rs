@@ -63,6 +63,33 @@ macro_rules! maybe_from {
                 }
             }
 
+            impl<'a> MayBeFrom<&'a Box<$rs>> for Mat<'a>
+            where
+                Mat<'a>: MayBeFrom<&'a $rs>
+            {
+                fn maybe_from<S: Into<String>>(name: S, data: &'a Box<$rs>) -> Result<Self> {
+                    MayBeFrom::<&$rs>::maybe_from(name, data.as_ref())
+                }
+            }
+
+            impl<'a> MayBeFrom<&'a std::rc::Rc<$rs>> for Mat<'a>
+            where
+                Mat<'a>: MayBeFrom<&'a $rs>
+            {
+                fn maybe_from<S: Into<String>>(name: S, data: &'a std::rc::Rc<$rs>) -> Result<Self> {
+                    MayBeFrom::<&$rs>::maybe_from(name, data.as_ref())
+                }
+            }
+
+            impl<'a> MayBeFrom<&'a std::sync::Arc<$rs>> for Mat<'a>
+            where
+                Mat<'a>: MayBeFrom<&'a $rs>
+            {
+                fn maybe_from<S: Into<String>>(name: S, data: &'a std::sync::Arc<$rs>) -> Result<Self> {
+                    MayBeFrom::<&$rs>::maybe_from(name, data.as_ref())
+                }
+            }
+
             impl<'a> MayBeFrom<Vec<$rs>> for Mat<'a> {
                 fn maybe_from<S: Into<String>>(name: S, data: Vec<$rs>) -> Result<Self> {
                     MayBeFrom::<&[$rs]>::maybe_from(name, data.as_slice())
