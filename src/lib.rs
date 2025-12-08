@@ -150,6 +150,7 @@ use thiserror::Error;
 // mod builder;
 // pub use builder::Builder;
 mod matfile;
+pub mod cell;
 pub use matfile::{MatFile, MatFileRead, MatFileWrite};
 mod datatype;
 pub(crate) use datatype::{DataType, MatType};
