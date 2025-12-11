@@ -1,4 +1,7 @@
-use std::{collections::VecDeque, fmt::{Debug, Display}};
+use std::{
+    collections::VecDeque,
+    fmt::{Debug, Display},
+};
 
 use super::CellBounds;
 use crate::{Mat, MatioError, MayBeFrom, MayBeInto};
@@ -39,5 +42,11 @@ where
     fn try_from(last_cell: LastCell<T>) -> std::result::Result<Self, Self::Error> {
         let mat = <Mat<'a> as MayBeFrom<T>>::maybe_from(String::new(), last_cell.item);
         mat.map(|mat| vec![mat].into())
+    }
+}
+
+impl<T> LastCell<T> where for<'a> Mat<'a>: MayBeFrom<T> + MayBeInto<T> {
+    pub fn i(&self) -> &T {
+        &self.item
     }
 }

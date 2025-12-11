@@ -21,6 +21,12 @@ mod tests {
         let c = Cell::new(1u32).push(1.23456f64).push("qwerty".to_string());
         dbg!(&c);
         println!("{c}");
+        let q = c.i();
+        let q = c.n().map(|c| c.i());
+        let q = c.n().and_then(|c| c.n().map(|c| c.i()));
+        let q = c.n().and_then(|c| c.n().and_then(|c| c.n().map(|c| c.i())));
+        dbg!(&q);
+        // let q = c.n().unwrap().n().unwrap().n().unwrap().i();
         let m: Mat = MayBeFrom::maybe_from("cell", c).unwrap();
         let matf = MatFile::save("cell.mat").unwrap();
         matf.write(m);

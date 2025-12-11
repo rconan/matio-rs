@@ -14,6 +14,10 @@ pub trait CellBounds {
     where
         for<'a> Mat<'a>: MayBeFrom<I> + MayBeInto<I>;
     fn to_mat<'a>(self) -> Result<VecDeque<Mat<'a>>>;
+    fn i(&self) -> &Self::Item;
+    fn n(&self) -> Option<&Self::NextCell> {
+        None
+    }
 }
 
 impl<T> CellBounds for LastCell<T>
@@ -40,6 +44,10 @@ where
 
     fn to_mat<'a>(self) -> Result<VecDeque<Mat<'a>>> {
         <Mat<'a> as MayBeFrom<T>>::maybe_from(String::new(), self.item).map(|mat| vec![mat].into())
+    }
+
+    fn i(&self) -> &Self::Item {
+        &self.item
     }
 }
 
@@ -71,5 +79,13 @@ where
         let mut next_mat = self.next_cell.to_mat()?;
         next_mat.push_front(mat);
         Ok(next_mat)
+    }
+
+    fn i(&self) -> &Self::Item {
+        &self.item
+    }
+
+    fn n(&self) -> Option<&Self::NextCell> {
+        Some(&self.next_cell)
     }
 }
