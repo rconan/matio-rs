@@ -26,8 +26,7 @@ where
     LastCell<T>: CellBounds,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let i = <Self as CellBounds>::INDEX;
-        writeln!(f, "{i}: {}", self.item)
+        write!(f, "{{[{}]}}", self.item)
     }
 }
 

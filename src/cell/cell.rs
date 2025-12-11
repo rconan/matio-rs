@@ -34,9 +34,8 @@ where
     C: CellBounds + Display,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let i = <Self as CellBounds>::INDEX;
-        writeln!(f, "{i}: {}", self.item)?;
-        writeln!(f, "{}", self.next_cell)
+        write!(f, "{{[{}]}} ", self.item)?;
+        self.next_cell.fmt(f)
     }
 }
 
