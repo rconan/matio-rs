@@ -19,7 +19,7 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("LastCell")
-            .field("item", &self.item)
+            .field(&format!("item #{}",Self::INDEX), &self.item)
             .finish()
     }
 }
