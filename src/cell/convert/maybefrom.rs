@@ -1,17 +1,18 @@
-use std::{collections::VecDeque, ffi::CString};
+use std::ffi::CString;
 
 use crate::{
     Mat, MatioError, MayBeFrom, MayBeInto, Result,
-    cell::{Cell, CellBounds},
+    cell::{Cell, CellBounds, cell_bounds::ToMat},
 };
 
 impl<'a, T, C> MayBeFrom<Cell<T, C>> for Mat<'a>
 where
     C: CellBounds,
-    for<'b> Mat<'b>: MayBeFrom<T> + MayBeInto<T>,
+    Cell<T, C>: ToMat<'a, T>,
+    Mat<'a>: MayBeFrom<T> + MayBeInto<T>,
 {
     fn maybe_from<S: Into<String>>(name: S, cell: Cell<T, C>) -> Result<Self> {
-        let mut mat = VecDeque::try_from(cell)?;
+        let mut mat = ToMat::to_mat(cell)?;
         mat.iter_mut().for_each(|mat| {
             mat.as_ref = true;
         });

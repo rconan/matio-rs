@@ -1,10 +1,11 @@
 use crate::{
-    cell::{Cell, CellBounds, LastCell}, DataType, Mat, MatioError, MayBeFrom, MayBeInto, Result
+    DataType, Mat, MatioError, MayBeInto, Result,
+    cell::{Cell, CellBounds, LastCell},
 };
 
 impl<'a, T> MayBeInto<LastCell<T>> for Mat<'a>
 where
-    for<'b> Mat<'b>: MayBeFrom<T> + MayBeInto<T>,
+    Mat<'a>: MayBeInto<T>,
     LastCell<T>: CellBounds,
 {
     fn maybe_into(self) -> Result<LastCell<T>> {
@@ -28,8 +29,7 @@ where
 impl<'a, T, C> MayBeInto<Cell<T, C>> for Mat<'a>
 where
     C: CellBounds,
-    for<'b> Mat<'b>: MayBeFrom<T> + MayBeInto<T>,
-    for<'b> Mat<'b>: MayBeInto<C>,
+    Mat<'a>: MayBeInto<T> + MayBeInto<C>,
 {
     fn maybe_into(self) -> Result<Cell<T, C>> {
         match self.mat_type() {
