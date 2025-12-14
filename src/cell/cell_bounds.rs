@@ -1,34 +1,4 @@
-use std::collections::VecDeque;
-
 use super::{Cell, LastCell};
-use crate::{Mat, MayBeFrom, Result};
-
-pub trait ToMat<'a, T>
-where
-    Mat<'a>: MayBeFrom<T>,
-{
-    fn to_mat(self) -> Result<VecDeque<Mat<'a>>>;
-}
-impl<'a, T> ToMat<'a, T> for LastCell<T>
-where
-    Mat<'a>: MayBeFrom<T>,
-{
-    fn to_mat(self) -> Result<VecDeque<Mat<'a>>> {
-        <Mat<'a> as MayBeFrom<T>>::maybe_from(String::new(), self.item).map(|mat| vec![mat].into())
-    }
-}
-impl<'a, T, C> ToMat<'a, T> for Cell<T, C>
-where
-    Mat<'a>: MayBeFrom<T> + MayBeFrom<<C as CellBounds>::Item>,
-    C: CellBounds + ToMat<'a, <C as CellBounds>::Item>,
-{
-    fn to_mat(self) -> Result<VecDeque<Mat<'a>>> {
-        let mat = <Mat<'a> as MayBeFrom<T>>::maybe_from(String::new(), self.item)?;
-        let mut next_mat = self.next_cell.to_mat()?;
-        next_mat.push_front(mat);
-        Ok(next_mat)
-    }
-}
 
 pub trait CellBounds {
     const INDEX: usize;

@@ -1,15 +1,42 @@
-use std::ffi::CString;
+use std::{collections::VecDeque, ffi::CString};
 
 use crate::{
-    Mat, MatioError, MayBeFrom, MayBeInto, Result,
-    cell::{Cell, CellBounds, cell_bounds::ToMat},
+    Mat, MatioError, MayBeFrom, Result,
+    cell::{Cell, CellBounds, LastCell},
 };
+
+pub trait ToMat<'a, T>
+where
+    Mat<'a>: MayBeFrom<T>,
+{
+    fn to_mat(self) -> Result<VecDeque<Mat<'a>>>;
+}
+impl<'a, T> ToMat<'a, T> for LastCell<T>
+where
+    Mat<'a>: MayBeFrom<T>,
+{
+    fn to_mat(self) -> Result<VecDeque<Mat<'a>>> {
+        <Mat<'a> as MayBeFrom<T>>::maybe_from(String::new(), self.item).map(|mat| vec![mat].into())
+    }
+}
+impl<'a, T, C> ToMat<'a, T> for Cell<T, C>
+where
+    Mat<'a>: MayBeFrom<T> + MayBeFrom<<C as CellBounds>::Item>,
+    C: CellBounds + ToMat<'a, <C as CellBounds>::Item>,
+{
+    fn to_mat(self) -> Result<VecDeque<Mat<'a>>> {
+        let mat = <Mat<'a> as MayBeFrom<T>>::maybe_from(String::new(), self.item)?;
+        let mut next_mat = self.next_cell.to_mat()?;
+        next_mat.push_front(mat);
+        Ok(next_mat)
+    }
+}
 
 impl<'a, T, C> MayBeFrom<Cell<T, C>> for Mat<'a>
 where
     C: CellBounds,
     Cell<T, C>: ToMat<'a, T>,
-    Mat<'a>: MayBeFrom<T> + MayBeInto<T>,
+    Mat<'a>: MayBeFrom<T>,
 {
     fn maybe_from<S: Into<String>>(name: S, cell: Cell<T, C>) -> Result<Self> {
         let mut mat = ToMat::to_mat(cell)?;
