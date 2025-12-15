@@ -1,6 +1,11 @@
+
 use std::{ffi::CString, marker::PhantomData, ptr, vec};
 
-use crate::{Mat, MatArray, MatioError, Result};
+use crate::{
+    Mat, MatArray, MatioError, Result,
+};
+
+mod tuple;
 
 /// Convert a Rust data type into a [Mat] variable
 pub trait MayBeFrom<T> {
@@ -102,31 +107,31 @@ macro_rules! maybe_from {
                 }
             }
 
-            impl<'a> MayBeFrom<($rs,)> for Mat<'a> {
-                fn maybe_from<S: Into<String>>(name: S, data: ($rs,)) -> Result<Self> {
-                    MayBeFrom::<Vec<$rs>>::maybe_from(name, vec![data.0])
-                }
-            }
-            impl<'a> MayBeFrom<($rs,$rs)> for Mat<'a> {
-                fn maybe_from<S: Into<String>>(name: S, data: ($rs,$rs)) -> Result<Self> {
-                    MayBeFrom::<Vec<$rs>>::maybe_from(name, vec![data.0,data.1])
-                }
-            }
-            impl<'a> MayBeFrom<($rs,$rs,$rs)> for Mat<'a> {
-                fn maybe_from<S: Into<String>>(name: S, data: ($rs,$rs,$rs)) -> Result<Self> {
-                    MayBeFrom::<Vec<$rs>>::maybe_from(name, vec![data.0,data.1,data.2])
-                }
-            }
-            impl<'a> MayBeFrom<($rs,$rs,$rs,$rs)> for Mat<'a> {
-                fn maybe_from<S: Into<String>>(name: S, data: ($rs,$rs,$rs,$rs)) -> Result<Self> {
-                   MayBeFrom::<Vec<$rs>>::maybe_from(name, vec![data.0,data.1,data.2,data.3])
-                }
-            }
-            impl<'a> MayBeFrom<($rs,$rs,$rs,$rs,$rs)> for Mat<'a> {
-                fn maybe_from<S: Into<String>>(name: S, data: ($rs,$rs,$rs,$rs,$rs)) -> Result<Self> {
-                   MayBeFrom::<Vec<$rs>>::maybe_from(name, vec![data.0,data.1,data.2,data.3,data.4])
-                }
-            }
+            // impl<'a> MayBeFrom<($rs,)> for Mat<'a> {
+            //     fn maybe_from<S: Into<String>>(name: S, data: ($rs,)) -> Result<Self> {
+            //         MayBeFrom::<Vec<$rs>>::maybe_from(name, vec![data.0])
+            //     }
+            // }
+            // impl<'a> MayBeFrom<($rs,$rs)> for Mat<'a> {
+            //     fn maybe_from<S: Into<String>>(name: S, data: ($rs,$rs)) -> Result<Self> {
+            //         MayBeFrom::<Vec<$rs>>::maybe_from(name, vec![data.0,data.1])
+            //     }
+            // }
+            // impl<'a> MayBeFrom<($rs,$rs,$rs)> for Mat<'a> {
+            //     fn maybe_from<S: Into<String>>(name: S, data: ($rs,$rs,$rs)) -> Result<Self> {
+            //         MayBeFrom::<Vec<$rs>>::maybe_from(name, vec![data.0,data.1,data.2])
+            //     }
+            // }
+            // impl<'a> MayBeFrom<($rs,$rs,$rs,$rs)> for Mat<'a> {
+            //     fn maybe_from<S: Into<String>>(name: S, data: ($rs,$rs,$rs,$rs)) -> Result<Self> {
+            //        MayBeFrom::<Vec<$rs>>::maybe_from(name, vec![data.0,data.1,data.2,data.3])
+            //     }
+            // }
+            // impl<'a> MayBeFrom<($rs,$rs,$rs,$rs,$rs)> for Mat<'a> {
+            //     fn maybe_from<S: Into<String>>(name: S, data: ($rs,$rs,$rs,$rs,$rs)) -> Result<Self> {
+            //        MayBeFrom::<Vec<$rs>>::maybe_from(name, vec![data.0,data.1,data.2,data.3,data.4])
+            //     }
+            // }
 
             impl<'a> MayBeFrom<MatArray<'a, $rs>> for Mat<'a> {
                 fn maybe_from<S: Into<String>>(name: S, mat_array: MatArray<'a, $rs>) -> Result<Self> {
@@ -475,3 +480,5 @@ impl<'a> MayBeFrom<&Vec<&str>> for Mat<'a> {
         <Mat<'a> as MayBeFrom<&[&str]>>::maybe_from(name, data)
     }
 }
+
+
