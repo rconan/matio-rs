@@ -37,3 +37,9 @@ impl<T> Cell<T, LastCell<T>> {
         LastCell { item }
     }
 }
+
+impl<T, C: CellBounds> Cell<T, C> {
+    pub fn split(self) -> (T, C) {
+        (self.item, self.next_cell)
+    }
+}

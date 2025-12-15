@@ -1,7 +1,6 @@
 use std::fmt::{Debug, Display};
 
 use super::CellBounds;
-use crate::{Mat, MayBeFrom, MayBeInto};
 
 pub struct LastCell<T> {
     pub(super) item: T,
@@ -23,11 +22,8 @@ where
     }
 }
 
-impl<T> LastCell<T>
-where
-    for<'a> Mat<'a>: MayBeFrom<T> + MayBeInto<T>,
-{
-    pub fn i(&self) -> &T {
-        &self.item
+impl<T> LastCell<T> {
+    pub fn item(self) -> T {
+        self.item
     }
 }

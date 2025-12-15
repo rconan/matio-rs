@@ -1,5 +1,10 @@
-use crate::{DataType, Mat, MatioError, Result};
+
+use crate::{
+    DataType, Mat, MatioError, Result,
+};
 use std::ptr;
+
+mod tuple;
 
 /// Convert a [Mat] variable into a Rust data type
 pub trait MayBeInto<T> {
@@ -198,3 +203,4 @@ impl<'a> MayBeInto<Vec<String>> for Mat<'a> {
         }
     }
 }
+
