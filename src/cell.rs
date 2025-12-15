@@ -2,13 +2,14 @@
 
 mod cell;
 mod cell_bounds;
+mod cellvec;
 mod convert;
 mod last_cell;
 
 pub use cell::Cell;
 pub use cell_bounds::CellBounds;
+pub use cellvec::CellVec;
 pub use last_cell::LastCell;
-
 
 // pub trait ItemBounds {} // where for <'a> Mat<'a>: MayBeFrom<T> {}
 // impl<T> ItemBounds for T where for<'a> Mat<'a>: MayBeFrom<T> {}
