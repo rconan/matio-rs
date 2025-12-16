@@ -2,6 +2,7 @@ use std::fmt::{Debug, Display};
 
 use super::{CellBounds, LastCell};
 
+/// Rust cell array
 pub struct Cell<T, C>
 where
     C: CellBounds,
@@ -11,12 +12,14 @@ where
 }
 
 impl<T> Cell<T, LastCell<T>> {
+    /// Creates a new [LastCell] instance
     pub fn new(item: T) -> LastCell<T> {
         LastCell { item }
     }
 }
 
 impl<T, C: CellBounds> Cell<T, C> {
+    /// Splits the cell between the item and the next cell
     pub fn split(self) -> (T, C) {
         (self.item, self.next_cell)
     }

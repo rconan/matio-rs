@@ -1,3 +1,59 @@
+/*!
+Matlab cell array
+
+The module defines a [Cell] structure that is used to read from and to write to
+a Matlab cell array.
+
+## Examples
+
+A 3 elements cell array is build and saved to a Mat file with:
+```
+use matio_rs::{MatFile, cell::{Cell, CellBounds}};
+# let file = tempfile::NamedTempFile::new().unwrap();
+# let data_path = file.path();
+let cell = Cell::new(1u32).push(1.23456f64).push("qwerty".to_string());
+MatFile::save(data_path)?
+    .var("cell", cell)?;
+# Ok::<(), matio_rs::MatioError>(())
+```
+
+The same 3 elements cell array is loaded with:
+```
+use matio_rs::{MatFile, cell::{Cell, LastCell, CellBounds}};
+# let file = tempfile::NamedTempFile::new().unwrap();
+# let data_path = file.path();
+# let cell = Cell::new(1u32).push(1.23456f64).push("qwerty".to_string());
+# MatFile::save(data_path)?
+#    .var("cell", cell)?;
+let c: Cell<u32, Cell<f64, LastCell<String>>> = MatFile::load("cell.mat")?.var("cell")?;
+# Ok::<(), matio_rs::MatioError>(())
+```
+
+Tuples are written to and read from Matlab cell array and often are a more
+convenient interface that using [Cell] directly.
+The 2 examples above could be replaced with:
+```
+use matio_rs::MatFile;
+# let file = tempfile::NamedTempFile::new().unwrap();
+# let data_path = file.path();
+let cell = (1u32, 1.23456f64, "qwerty");
+MatFile::save(data_path)?
+    .var("cell", cell)?;
+# Ok::<(), matio_rs::MatioError>(())
+```
+and:
+```
+use matio_rs::MatFile;
+# let file = tempfile::NamedTempFile::new().unwrap();
+# let data_path = file.path();
+# let cell = (1u32, 1.23456f64, "qwerty");
+# MatFile::save(data_path)?
+#    .var("cell", cell)?;
+let c: (u32, f64, String) = MatFile::load("cell.mat")?.var("cell")?;
+# Ok::<(), matio_rs::MatioError>(())
+```
+*/
+
 // https://orxfun.github.io/orxfun-notes/#/zero-cost-composition-2025-10-15
 
 mod cell;

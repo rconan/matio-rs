@@ -1,12 +1,18 @@
 use super::{Cell, LastCell};
 
+/// Cell interface
 pub trait CellBounds {
     const INDEX: usize;
     type PushBack<T>: CellBounds;
     type Item;
     type NextCell: CellBounds;
+    /// Creates a new [Cell] instance with the item
+    ///
+    /// The current cell is pushed back  
     fn push<I>(self, item: I) -> Self::PushBack<I>;
+    /// Returns the item
     fn i(&self) -> &Self::Item;
+    /// Returns the next cell if any
     fn n(&self) -> Option<&Self::NextCell> {
         None
     }

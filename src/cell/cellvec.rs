@@ -2,9 +2,15 @@ use std::vec;
 
 use super::{Cell, CellBounds, LastCell};
 
+/// Cell of the same item type
 pub trait CellVec<T>: CellBounds<Item = T> {
+    /// Returns a reference to the item of cell with index `idx`
+    ///
+    /// Index `0` corresponds to the last cell
     fn get(&self, idx: usize) -> Option<&T>;
+    /// Converts a [Cell] into a [Vec]
     fn into_vec(self) -> Vec<T>;
+    /// Empties a [Vec] into a [Cell]
     fn from_vec(v: &mut Vec<T>) -> Option<Self>
     where
         Self: Sized;

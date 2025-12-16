@@ -2,11 +2,13 @@ use std::fmt::{Debug, Display};
 
 use super::CellBounds;
 
+/// Cell array last cell
 pub struct LastCell<T> {
     pub(super) item: T,
 }
 
 impl<T> LastCell<T> {
+    /// Returns the cell item
     pub fn item(self) -> T {
         self.item
     }
