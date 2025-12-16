@@ -10,6 +10,18 @@ where
     pub(super) next_cell: C,
 }
 
+impl<T> Cell<T, LastCell<T>> {
+    pub fn new(item: T) -> LastCell<T> {
+        LastCell { item }
+    }
+}
+
+impl<T, C: CellBounds> Cell<T, C> {
+    pub fn split(self) -> (T, C) {
+        (self.item, self.next_cell)
+    }
+}
+
 impl<T: Debug, C> Debug for Cell<T, C>
 where
     C: CellBounds + Debug,
@@ -32,14 +44,25 @@ where
     }
 }
 
-impl<T> Cell<T, LastCell<T>> {
-    pub fn new(item: T) -> LastCell<T> {
-        LastCell { item }
+impl<T, C> PartialEq for Cell<T, C>
+where
+    T: PartialEq,
+    C: CellBounds + PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.item == other.item && self.next_cell == other.next_cell
     }
 }
 
-impl<T, C: CellBounds> Cell<T, C> {
-    pub fn split(self) -> (T, C) {
-        (self.item, self.next_cell)
+impl<T, C> Clone for Cell<T, C>
+where
+    T: Clone,
+    C: CellBounds + Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            item: self.item.clone(),
+            next_cell: self.next_cell.clone(),
+        }
     }
 }

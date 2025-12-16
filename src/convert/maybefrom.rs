@@ -41,6 +41,31 @@ macro_rules! maybe_from {
                 }
             }
 
+            impl<'a> MayBeFrom<&'a $rs> for Mat<'a> {
+                fn maybe_from<S: Into<String>>(name: S, data: &'a $rs) -> Result<Self> {
+                    let c_name = CString::new(name.into())?;
+                    let mut dims = [1, 1];
+                    let matvar_t = unsafe {
+                        ffi::Mat_VarCreate(
+                            c_name.as_ptr(),
+                            $mat_c,
+                            $mat_t,
+                            2,
+                            dims.as_mut_ptr(),
+                            &data as *const _ as *mut std::ffi::c_void,
+                            0,
+                        )
+                    };
+                    if matvar_t.is_null() {
+                        Err(MatioError::MatVarCreate(
+                            c_name.to_str().unwrap().to_string(),
+                        ))
+                    } else {
+                        Mat::from_ptr(c_name.to_str().unwrap(), matvar_t)
+                    }
+                }
+            }
+
             impl<'a> MayBeFrom<&[$rs]> for Mat<'a> {
                 fn maybe_from<S: Into<String>>(name: S, data: &[$rs]) -> Result<Self> {
                     let c_name = CString::new(name.into())?;

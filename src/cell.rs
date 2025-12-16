@@ -21,7 +21,7 @@ mod tests {
 
     #[test]
     fn cell() {
-        let c = Cell::new(1u32).push(1.23456f64).push("qwerty");
+        let c = Cell::new(1u32).push(1.23456f64).push("qwerty".to_string());
         dbg!(&c);
         println!("{c}");
         let _q = c.i();
@@ -34,13 +34,12 @@ mod tests {
         dbg!(&q);
 
         let matf = MatFile::save("cell.mat").unwrap();
-        matf.var("cell", c).unwrap();
+        matf.var("cell", c.clone()).unwrap();
 
         let matf = MatFile::load("cell.mat").unwrap();
         let c1: Cell<u32, Cell<f64, LastCell<String>>> = matf.var("cell").unwrap();
         dbg!(&c1);
         println!("{c1}");
-        // assert_eq!(c,c1);
+        assert_eq!(c, c1);
     }
-
 }
