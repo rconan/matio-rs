@@ -116,6 +116,6 @@ mod tests {
     fn into_vec() {
         let c = Cell::new(0i32).push(1i32).push(2i32).push(3i32).push(4i32);
         let v: Vec<i32> = c.into();
-        dbg!(&v);
+        assert_eq!(v, vec![0i32, 1, 2, 3, 4]);
     }
 }

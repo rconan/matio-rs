@@ -15,12 +15,12 @@ pub use last_cell::LastCell;
 // impl<T> ItemBounds for T where for<'a> Mat<'a>: MayBeFrom<T> {}
 #[cfg(test)]
 mod tests {
-    use crate::{Mat, MatFile, MayBeFrom, MayBeInto};
+    use crate::MatFile;
 
     use super::*;
 
     #[test]
-    fn maybe_from() {
+    fn cell() {
         let c = Cell::new(1u32).push(1.23456f64).push("qwerty");
         dbg!(&c);
         println!("{c}");
@@ -32,19 +32,15 @@ mod tests {
         let q = c.n().and_then(|c| c.n().and_then(|c| c.n().map(|c| c.i())));
         assert!(q.is_none());
         dbg!(&q);
-        // let q = c.n().unwrap().n().unwrap().n().unwrap().i();
-        let m: Mat = MayBeFrom::maybe_from("cell", c).unwrap();
+
         let matf = MatFile::save("cell.mat").unwrap();
-        matf.write(m);
-        // dbg!(m.len());
+        matf.var("cell", c).unwrap();
+
+        let matf = MatFile::load("cell.mat").unwrap();
+        let c1: Cell<u32, Cell<f64, LastCell<String>>> = matf.var("cell").unwrap();
+        dbg!(&c1);
+        println!("{c1}");
+        // assert_eq!(c,c1);
     }
 
-    #[test]
-    fn maybe_into() {
-        let matf = MatFile::load("cell.mat").unwrap();
-        let mat = matf.read("cell").unwrap();
-        let c: Cell<u32, Cell<f64, LastCell<String>>> = MayBeInto::maybe_into(mat).unwrap();
-        dbg!(&c);
-        println!("{c}");
-    }
 }
