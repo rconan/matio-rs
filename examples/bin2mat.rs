@@ -40,7 +40,10 @@ impl<'a> MayBeInto<Opds> for Mat<'a> {
 }
 
 fn main() -> anyhow::Result<()> {
-    let data: Opds = bincode::deserialize_from(File::open("data/opds.bin")?)?;
+    let data: Opds = bincode::serde::decode_from_std_read(
+        &mut File::open("data/opds.bin")?,
+        bincode::config::legacy(),
+    )?;
     MatFile::save("data/opds.mat")?.var("opds", &data)?;
     Ok(())
 }
