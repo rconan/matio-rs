@@ -22,6 +22,14 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
+    - name: Verify vcpkg zlib installation (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        echo "=== vcpkg installed triplets ==="
+        dir "${{ github.workspace }}\vcpkg\installed"
+        echo "=== x64-windows-static lib contents ==="
+        dir "${{ github.workspace }}\vcpkg\installed\x64-windows-static\lib" 2>nul || echo "DIR NOT FOUND"
+      shell: cmd
     - name: Install zlib (Windows)
       if: runner.os == 'Windows'
       run: |
