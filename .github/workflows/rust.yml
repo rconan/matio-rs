@@ -29,7 +29,17 @@ jobs:
         git clone https://github.com/Microsoft/vcpkg.git
         .\vcpkg\bootstrap-vcpkg.bat
         .\vcpkg\vcpkg.exe install zlib:x64-windows-static
+        $zlibLib = "${{ github.workspace }}\vcpkg\installed\x64-windows-static\lib\zlib.lib"
+        if (-not (Test-Path $zlibLib)) {
+          Write-Error "zlib.lib not found at $zlibLib"
+          dir "${{ github.workspace }}\vcpkg\installed" -Recurse -Filter "*.lib" | Select-Object FullName
+          exit 1
+        }
+        Write-Host "Found: $zlibLib"
         echo "VCPKG_ROOT=${{ github.workspace }}\vcpkg" >> $env:GITHUB_ENV
+        echo "ZLIB_LIB_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows-static\lib" >> $env:GITHUB_ENV
+        echo "ZLIB_INCLUDE_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows-static\include" >> $env:GITHUB_ENV
+        echo "LIBZ_SYS_STATIC=1" >> $env:GITHUB_ENV
     - name: Set Rust/zlib environment variables
       if: runner.os == 'Windows'
       shell: pwsh
