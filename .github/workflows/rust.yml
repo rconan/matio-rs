@@ -22,6 +22,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
+
     - name: Install zlib (Windows)
       if: runner.os == 'Windows'
       shell: pwsh
@@ -33,37 +34,20 @@ jobs:
         $dbgDir = "${{ github.workspace }}\vcpkg\installed\x64-windows-static\debug\lib"
         Copy-Item "$libDir\zs.lib" "$libDir\zlib.lib"
         Copy-Item "$dbgDir\zsd.lib" "$dbgDir\zlib.lib"
-        echo "VCPKG_ROOT=${{ github.workspace }}\vcpkg" >> $env:GITHUB_ENV
+        $includeDir = "${{ github.workspace }}\vcpkg\installed\x64-windows-static\include"
         echo "ZLIB_LIB_DIR=$libDir" >> $env:GITHUB_ENV
-        echo "ZLIB_INCLUDE_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows-static\include" >> $env:GITHUB_ENV
+        echo "ZLIB_INCLUDE_DIR=$includeDir" >> $env:GITHUB_ENV
         echo "LIBZ_SYS_STATIC=1" >> $env:GITHUB_ENV
-    - name: Set Rust/zlib environment variables
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-        echo "ZLIB_LIB_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows-static\lib" >> $env:GITHUB_ENV
-        echo "ZLIB_INCLUDE_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows-static\include" >> $env:GITHUB_ENV
-        echo "LIBZ_SYS_STATIC=1" >> $env:GITHUB_ENV
-    - name: Set Rust/zlib environment variables
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-        echo "ZLIB_LIB_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows-static\lib" >> $env:GITHUB_ENV
-        echo "ZLIB_INCLUDE_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows-static\include" >> $env:GITHUB_ENV
-        echo "LIBZ_SYS_STATIC=1" >> $env:GITHUB_ENV
+        echo "RUSTFLAGS=-L $libDir" >> $env:GITHUB_ENV
+
     - name: Build
       run: cargo build --verbose --all-features
+
     - name: Test (Windows)
       if: runner.os == 'Windows'
       shell: pwsh
-      run: |
-        $env:ZLIB_LIB_DIR = "${{ github.workspace }}\vcpkg\installed\x64-windows-static\lib"
-        $env:ZLIB_INCLUDE_DIR = "${{ github.workspace }}\vcpkg\installed\x64-windows-static\include"
-        $env:LIBZ_SYS_STATIC = "1"
-        cargo test --verbose --all-features
+      run: cargo test --verbose --all-features
+
     - name: Test (Linux)
       if: runner.os == 'Linux'
       run: cargo test --verbose --all-features
-    # - name: Run tests
-      # run: cargo test --verbose --all-features
-      
