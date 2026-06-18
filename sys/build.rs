@@ -21,7 +21,7 @@ fn main() {
         } else {
             panic!("ZLIB_LIB_DIR environment variable not set");
         }
-        println!("cargo:rustc-link-lib=zlib");
+        println!("cargo:rustc-link-lib=z");
     } else {
         println!("cargo:rustc-link-lib=matio");
         println!("cargo:rustc-link-lib=z");
