@@ -22,42 +22,38 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
-    - name: Verify vcpkg zlib installation (Windows)
-      if: runner.os == 'Windows'
-      run: |
-        echo "=== vcpkg installed triplets ==="
-        dir "${{ github.workspace }}\vcpkg\installed"
-        echo "=== x64-windows-static lib contents ==="
-        dir "${{ github.workspace }}\vcpkg\installed\x64-windows-static\lib" 2>nul || echo "DIR NOT FOUND"
-      shell: cmd
     - name: Install zlib (Windows)
       if: runner.os == 'Windows'
+      shell: pwsh
       run: |
         git clone https://github.com/Microsoft/vcpkg.git
         .\vcpkg\bootstrap-vcpkg.bat
         .\vcpkg\vcpkg.exe install zlib:x64-windows-static
-        .\vcpkg\vcpkg.exe integrate install
-        echo "VCPKG_ROOT=${{ github.workspace }}\vcpkg" >> $GITHUB_ENV
-      shell: cmd
-    - name: Set Rust/zlib environment variables  
+        echo "VCPKG_ROOT=${{ github.workspace }}\vcpkg" >> $env:GITHUB_ENV
+    - name: Set Rust/zlib environment variables
       if: runner.os == 'Windows'
+      shell: pwsh
       run: |
-        echo "ZLIB_LIB_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows-static\lib" >> $GITHUB_ENV
-        echo "ZLIB_INCLUDE_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows-static\include" >> $GITHUB_ENV
-        echo "LIBZ_SYS_STATIC=1" >> $GITHUB_ENV
-      shell: bash
+        echo "ZLIB_LIB_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows-static\lib" >> $env:GITHUB_ENV
+        echo "ZLIB_INCLUDE_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows-static\include" >> $env:GITHUB_ENV
+        echo "LIBZ_SYS_STATIC=1" >> $env:GITHUB_ENV
+    - name: Set Rust/zlib environment variables
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        echo "ZLIB_LIB_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows-static\lib" >> $env:GITHUB_ENV
+        echo "ZLIB_INCLUDE_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows-static\include" >> $env:GITHUB_ENV
+        echo "LIBZ_SYS_STATIC=1" >> $env:GITHUB_ENV
     - name: Build
       run: cargo build --verbose --all-features
     - name: Test (Windows)
       if: runner.os == 'Windows'
+      shell: pwsh
       run: |
-        # Set environment variables explicitly for test
-        $env:ZLIB_LIB_DIR = "${{ github.workspace }}/vcpkg/installed/x64-windows-static/lib"
-        $env:ZLIB_INCLUDE_DIR = "${{ github.workspace }}/vcpkg/installed/x64-windows-static/include"
+        $env:ZLIB_LIB_DIR = "${{ github.workspace }}\vcpkg\installed\x64-windows-static\lib"
+        $env:ZLIB_INCLUDE_DIR = "${{ github.workspace }}\vcpkg\installed\x64-windows-static\include"
         $env:LIBZ_SYS_STATIC = "1"
-        $env:RUSTFLAGS = "-L ${{ github.workspace }}/vcpkg/installed/x64-windows-static/lib"
         cargo test --verbose --all-features
-      shell: powershell  
     - name: Test (Linux)
       if: runner.os == 'Linux'
       run: cargo test --verbose --all-features
