@@ -43,12 +43,13 @@ jobs:
     - name: Test (Windows)
       if: runner.os == 'Windows'
       run: |
-         # Set environment variables explicitly for test
-         echo "ZLIB_LIB_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows\lib" >> $GITHUB_ENV
-         echo "ZLIB_INCLUDE_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows\include" >> $GITHUB_ENV
-         echo "LIBZ_SYS_STATIC=1" >> $GITHUB_ENV
-         cargo test --verbose --all-features
-    #   shell: powershell  
+        # Set environment variables explicitly for test
+        $env:ZLIB_LIB_DIR = "${{ github.workspace }}/vcpkg/installed/x64-windows/lib"
+        $env:ZLIB_INCLUDE_DIR = "${{ github.workspace }}/vcpkg/installed/x64-windows/include"
+        $env:LIBZ_SYS_STATIC = "1"
+        $env:RUSTFLAGS = "-L ${{ github.workspace }}/vcpkg/installed/x64-windows/lib"
+        cargo test --verbose --all-features
+      shell: powershell  
     - name: Test (Linux)
       if: runner.os == 'Linux'
       run: cargo test --verbose --all-features
