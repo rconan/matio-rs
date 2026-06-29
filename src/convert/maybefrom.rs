@@ -346,7 +346,7 @@ impl<'a> MayBeFrom<&str> for Mat<'a> {
             ffi::Mat_VarCreate(
                 c_name.as_ptr(),
                 ffi::matio_classes_MAT_C_CHAR,
-                ffi::matio_types_MAT_T_UINT8,
+                ffi::matio_types_MAT_T_UTF8,
                 2,
                 dims.as_mut_ptr(),
                 data.as_ptr() as *mut std::ffi::c_void,
@@ -396,7 +396,7 @@ impl<'a> MayBeFrom<&[&str]> for Mat<'a> {
                 let matvar_t = ffi::Mat_VarCreate(
                     std::ptr::null_mut(),
                     ffi::matio_classes_MAT_C_CHAR,
-                    ffi::matio_types_MAT_T_UINT8,
+                    ffi::matio_types_MAT_T_UTF8,
                     2,
                     dims.as_mut_ptr(),
                     s.as_ptr() as *mut std::ffi::c_void,
