@@ -17,9 +17,9 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        
+
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         submodules: recursive
 
@@ -32,8 +32,8 @@ jobs:
         .\vcpkg\vcpkg.exe install zlib:x64-windows-static
         $libDir = "${{ github.workspace }}\vcpkg\installed\x64-windows-static\lib"
         $dbgDir = "${{ github.workspace }}\vcpkg\installed\x64-windows-static\debug\lib"
-        Copy-Item "$libDir\zs.lib" "$libDir\zlib.lib"
-        Copy-Item "$dbgDir\zsd.lib" "$dbgDir\zlib.lib"
+        Copy-Item "$libDir\zs.lib" "$libDir\z.lib"
+        Copy-Item "$dbgDir\zsd.lib" "$dbgDir\z.lib"
         $includeDir = "${{ github.workspace }}\vcpkg\installed\x64-windows-static\include"
         echo "ZLIB_LIB_DIR=$libDir" >> $env:GITHUB_ENV
         echo "ZLIB_INCLUDE_DIR=$includeDir" >> $env:GITHUB_ENV
